@@ -1,1 +1,2 @@
 "# Proyecto-final-IA" 
+Instrucciones:
