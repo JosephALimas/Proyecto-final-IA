@@ -3,7 +3,7 @@ import csv
 import sys
 import os
 from datetime import datetime
-import requests
+#import requests
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
@@ -13,6 +13,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 import clases as cls
 import source as src
+
 ################ FONTS ##################
 title_font = QFont()
 title_font.setFamily('Helvetica')
@@ -28,6 +29,7 @@ instr2_font = QFont()
 instr2_font.setFamily('Helvetica')
 instr2_font.setPointSize(15)
 instr2_font.setBold(True)    
+
 ################ GUI CLASES ##################
 class MainMenuWindow(QMainWindow):
     def __init__(self):
