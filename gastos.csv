@@ -1,1 +1,1 @@
-id,articulo,categoria,precio,importancia,fecha
+id,articulo,id_user,categoria,precio,importancia,fecha

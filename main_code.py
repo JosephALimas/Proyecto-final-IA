@@ -17,6 +17,33 @@ import source as src
 user_cont = 0
 gastos_cont = 0
 users_list = []
+gastos_list = []
+border_style = """
+QLineEdit {
+    border: 2px solid #4B4B4B; /* Color del borde */
+    border-radius: 5px;       /* Esquinas redondeadas */
+    padding: 10px;            /* Espacio interno */
+    font-size: 16px;          /* Tamaño de la fuente */
+}
+"""
+button_style = """
+QPushButton {
+    background-color: #8B0000; /* Color de fondo */
+    color: white;              /* Color del texto */
+    border: 2px solid #4B4B4B; /* Borde del botón */
+    border-radius: 10px;       /* Bordes redondeados */
+    padding: 10px;             /* Espacio interno */
+    font-size: 16px;           /* Tamaño de la fuente */
+}
+QPushButton:hover {
+    background-color: #A52A2A; /* Color de fondo al pasar el ratón por encima */
+}
+QPushButton:pressed {
+    background-color: #5C0000; /* Color de fondo al presionar */
+}
+"""
+
+
 ################ FONTS ##################
 title_font = QFont()
 title_font.setFamily('Helvetica')
@@ -81,12 +108,15 @@ class startWindow(QMainWindow):
         boton_opt_1.setStyleSheet('border: 2px solid #4B4B4B')
         boton_opt_1.clicked.connect(self.open_opt_1_window)
         boton_opt_1.setFixedHeight(250)
+        boton_opt_1.setStyleSheet(button_style)  
+
         #boton de opcion dos
         boton_opt_2 = QPushButton("2. Registrarse")
         boton_opt_2.setFont(instr_font)
         boton_opt_2.setStyleSheet('border: 2px solid #4B4B4B')
         boton_opt_2.setFixedHeight(250)
         boton_opt_2.clicked.connect(self.open_opt_2_window)
+        boton_opt_2.setStyleSheet(button_style)
         #agregamos los widgets a la pantalla
         self.main_menu_layout.addWidget(main_frame)
         main_frame.layout().addWidget(title_frame)
@@ -146,6 +176,7 @@ class LogInWindow(QWidget):
         # espacio para añadir la información
         self.lineEdit1 = QLineEdit()
         self.lineEdit1.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lineEdit1.setStyleSheet(border_style)
         self.lineEdit1.setReadOnly(False)
         self.lineEdit1.textChanged.connect(self.on_text_changed)
 
@@ -156,13 +187,16 @@ class LogInWindow(QWidget):
 
         self.lineEdit2 = QLineEdit()
         self.lineEdit2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lineEdit2.setStyleSheet(border_style)
         self.lineEdit2.setReadOnly(False)
         self.lineEdit2.textChanged.connect(self.on_text_changed)
 
         self.confirm_button = QPushButton("Iniciar Sesión")
         self.confirm_button.clicked.connect(self.logInProcess)
         self.confirm_button.setFont(instr2_font)
+        self.confirm_button.setStyleSheet(button_style)
         self.confirm_button.setFixedWidth(880)
+        
 
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
@@ -197,8 +231,7 @@ class LogInWindow(QWidget):
     def returnToMainMenu(self):
         self.main_menu_window.show()
         self.hide()
-        
-        
+              
 class RegisterWindow(QWidget):
     def __init__(self,main_menu_window: startWindow):
         super().__init__()
@@ -238,6 +271,7 @@ class RegisterWindow(QWidget):
         # espacio para añadir la información
         self.lineEdit1 = QLineEdit()
         self.lineEdit1.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lineEdit1.setStyleSheet(border_style)
         self.lineEdit1.setReadOnly(False)
         self.lineEdit1.textChanged.connect(self.on_text_changed)
 
@@ -248,6 +282,7 @@ class RegisterWindow(QWidget):
         # espacio para añadir la información
         self.contrLine = QLineEdit()
         self.contrLine.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.contrLine.setStyleSheet(border_style)
         self.contrLine.setReadOnly(False)
         self.contrLine.textChanged.connect(self.on_text_changed)
 
@@ -258,6 +293,7 @@ class RegisterWindow(QWidget):
 
         self.lineEdit2 = QLineEdit()
         self.lineEdit2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lineEdit2.setStyleSheet(border_style)
         self.lineEdit2.setReadOnly(False)
         self.lineEdit2.textChanged.connect(self.on_text_changed)
 
@@ -268,6 +304,7 @@ class RegisterWindow(QWidget):
 
         self.lineEdit3 = QLineEdit()
         self.lineEdit3.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lineEdit3.setStyleSheet(border_style)
         self.lineEdit3.setReadOnly(False)
         self.lineEdit3.textChanged.connect(self.on_text_changed)
 
@@ -278,12 +315,14 @@ class RegisterWindow(QWidget):
 
         self.lineEdit4 = QLineEdit()
         self.lineEdit4.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lineEdit4.setStyleSheet(border_style)
         self.lineEdit4.setReadOnly(False)
         self.lineEdit4.textChanged.connect(self.on_text_changed)
 
         self.confirm_button = QPushButton("Registrarse")
         self.confirm_button.clicked.connect(self.addUserProcess)
         self.confirm_button.setFont(instr2_font)
+        self.confirm_button.setStyleSheet(button_style)
         self.confirm_button.setFixedWidth(880)
 
         # regresar al menu principal
@@ -332,8 +371,7 @@ class RegisterWindow(QWidget):
     def returnToMainMenu(self):
         self.main_menu_window.show()
         self.hide()
-        
-        
+               
 class MainMenuWindow(QWidget):
     def __init__(self,main_menu_window: startWindow):
         super().__init__()
@@ -368,19 +406,19 @@ class MainMenuWindow(QWidget):
         # boton de opcion uno
         boton_opt_1 = QPushButton("1. Ingresar gastos")
         boton_opt_1.setFont(instr_font)
-        boton_opt_1.setStyleSheet('border: 2px solid #4B4B4B')
+        boton_opt_1.setStyleSheet(button_style)
         boton_opt_1.clicked.connect(self.open_opt_1_window)
         boton_opt_1.setFixedHeight(250)
         #boton de opcion dos
         boton_opt_2 = QPushButton("2. Ver análisis de gastos")
         boton_opt_2.setFont(instr_font)
-        boton_opt_2.setStyleSheet('border: 2px solid #4B4B4B')
+        boton_opt_2.setStyleSheet(button_style)
         boton_opt_2.setFixedHeight(250)
         boton_opt_2.clicked.connect(self.open_opt_2_window)
         #boton de opcion tres
         boton_opt_3 = QPushButton("3. Predecir gastos")
         boton_opt_3.setFont(instr_font)
-        boton_opt_3.setStyleSheet('border: 2px solid #4B4B4B')
+        boton_opt_3.setStyleSheet(button_style)
         boton_opt_3.setFixedHeight(250)
         boton_opt_3.clicked.connect(self.open_opt_3_window)
         # agregamos los widgets al layout
@@ -406,7 +444,6 @@ class MainMenuWindow(QWidget):
     def open_opt_3_window(self):
         return None
 
-
 class Opt1Window(QWidget):
     def __init__(self, main_menu_window: startWindow):
         super().__init__()
@@ -429,11 +466,87 @@ class Opt1Window(QWidget):
         title_frame.setLayout(QVBoxLayout())
         title_frame.setStyleSheet('color: #2F2F2F;')
 
-        welcome1_label = QLabel('Selecciona una opción')
+        welcome1_label = QLabel('Ingresa los siguientes datos')
         welcome1_label.setStyleSheet('color: #191970;')
         welcome1_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         welcome1_label.setFont(title_font)
 
+        arti_label = QLabel("Nombre de la compra: ")
+        arti_label.setStyleSheet('color: #191970;')
+        arti_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        arti_label.setFont(instr2_font)
+
+        self.lineEdit_nombre = QLineEdit()
+        self.lineEdit_nombre.setFixedHeight(60)
+        self.lineEdit_nombre.setStyleSheet(border_style)
+        self.lineEdit_nombre.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lineEdit_nombre.setReadOnly(False)
+
+        second_frame = QFrame()
+        second_frame.setFrameShape(QFrame.Shape.Box) 
+        second_frame.setLineWidth(1)
+        second_frame.setLayout(QHBoxLayout())
+        second_frame.setStyleSheet('color: #2F2F2F;')
+
+        third_frame = QFrame()
+        third_frame.setFrameShape(QFrame.Shape.Box) 
+        third_frame.setLineWidth(1)
+        third_frame.setLayout(QVBoxLayout())
+        third_frame.setStyleSheet('color: #2F2F2F;')
+
+        fourth_frame = QFrame()
+        fourth_frame.setFrameShape(QFrame.Shape.Box) 
+        fourth_frame.setLineWidth(1)
+        fourth_frame.setLayout(QVBoxLayout())
+        fourth_frame.setStyleSheet('color: #2F2F2F;')
+
+        categ_label = QLabel("Selecciona una categoría: ")
+        categ_label.setStyleSheet('color: #191970;')
+        categ_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        categ_label.setFont(instr2_font)
+
+        self.categ_options = QComboBox(self)
+        self.categ_options.setFont(instr2_font)
+        self.categ_options.setStyleSheet('border: 2px solid #7e562e')
+        self.categ_options.addItem('-- Selecciona --')
+        self.categ_options.addItem('Comida')
+        self.categ_options.addItem('Ropa')
+        self.categ_options.addItem('Transporte')
+        self.categ_options.addItem('Salud')
+        self.categ_options.addItem('Entretenimiento')
+        self.categ_options.addItem('Desarrollo Personal')
+        self.categ_options.addItem('Otro')
+        
+        import_label = QLabel("Selecciona un nivel de importancia: ")
+        import_label.setStyleSheet('color: #191970;')
+        import_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        import_label.setFont(instr2_font)
+
+        self.import_options = QComboBox(self)
+        self.import_options.setFont(instr2_font)
+        self.import_options.setStyleSheet('border: 2px solid #7e562e')
+        self.import_options.addItem('0')
+        self.import_options.addItem('1')
+        self.import_options.addItem('2')
+        self.import_options.addItem('3')
+        self.import_options.addItem('4')
+        self.import_options.addItem('5')
+        
+        precio_label = QLabel("Ingresa el precio pagado: ")
+        precio_label.setStyleSheet('color: #191970;')
+        precio_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        precio_label.setFont(instr2_font)
+
+        self.lineEdit_precio = QLineEdit()
+        self.lineEdit_precio.setStyleSheet(border_style)
+        self.lineEdit_precio.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lineEdit_precio.setReadOnly(False)
+
+        finish_button = QPushButton("Registrar")
+        finish_button.setStyleSheet('border: 10px solid #4B4B4B')
+        finish_button.setStyleSheet(button_style)
+        finish_button.clicked.connect(self.addGastoProcess)
+        finish_button.setFont(instr_font)
 
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
@@ -445,11 +558,28 @@ class Opt1Window(QWidget):
         menu1_layout.addWidget(main_frame)
         main_frame.layout().addWidget(title_frame)
         title_frame.layout().addWidget(welcome1_label)
+        main_frame.layout().addWidget(arti_label)
+        main_frame.layout().addWidget(self.lineEdit_nombre)
+        main_frame.layout().addWidget(second_frame)
+        second_frame.layout().addWidget(third_frame)
+        third_frame.layout().addWidget(categ_label)
+        third_frame.layout().addWidget(self.categ_options)
+        second_frame.layout().addWidget(fourth_frame)
+        fourth_frame.layout().addWidget(import_label)
+        fourth_frame.layout().addWidget(self.import_options)
+        main_frame.layout().addWidget(precio_label)
+        main_frame.layout().addWidget(self.lineEdit_precio)
+        main_frame.layout().addWidget(finish_button)
         main_frame.layout().addWidget(return_button)
+
+    def addGastoProcess(self):
+        return None
 
     def returnToMainMenu(self):
         self.main_menu_window.show()
         self.hide()
+
+
 
 class Opt2Window(QWidget):
     def __init__(self, main_menu_window:startWindow):

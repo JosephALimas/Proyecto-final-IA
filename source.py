@@ -13,7 +13,7 @@ def gastos_file_checkup():
     else: # en caso de que no esté el archivo lo creamos
         with open("gastos.csv", "w", newline = '') as inventario: # abrimos el archivo
             writer = csv.writer(inventario) # creaomos un objeto writer para poder escribir en el archivo
-            writer.writerow(["id","articulo", "categoria","precio","importancia","fecha"]) # escribimos la primer linea del 
+            writer.writerow(["id","articulo", "id_user","categoria","precio","importancia","fecha"]) # escribimos la primer linea del 
             # archivo que van a ser los encabezados de la tabla
 
 def users_file_checkup():
@@ -39,4 +39,10 @@ def csv_user_to_obj(users_list):
         users_list.append(tempUser)
     return users_list
 
-#def csv_gastos_to_obj()
+#def csv_gastos_to_obj(gastos_list)
+
+def add_new_gasto_to_csv(temp_gasto = cls.Gasto):
+    with open('gastos.csv', 'a', newline = "") as gastosCSV:
+        writer = csv.writer(gastosCSV)
+        writer.writerow([temp_gasto.id_gasto,temp_gasto.articulo,temp_gasto.id_user,temp_gasto.categoria,temp_gasto.precio,temp_gasto.importancia,temp_gasto.fecha])
+
