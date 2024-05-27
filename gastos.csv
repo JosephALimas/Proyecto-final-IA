@@ -1,8 +1,1 @@
-articulo,categoria,precio,importancia
-Molletes,Comida,51,3
-Erimia,Salud,850,1
-Nutriologo,Salud,400,1
-Papas,Comida,18,2
-Chokis,Comida,23,3
-Vitaloe,Comida,13,3
-Cafes aranza,Comida,50,2
+id,articulo,categoria,precio,importancia,fecha

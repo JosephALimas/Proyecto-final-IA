@@ -3,21 +3,20 @@ import csv
 import sys
 import os
 from datetime import datetime
-<<<<<<< HEAD
-# import requests
-=======
 #import requests
->>>>>>> 0cb990efd02519b656d5a18b7dc13c778fa16da4
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from PyQt6.QtWidgets import QApplication, QCheckBox, QFrame, QMainWindow, QWidget, QVBoxLayout, QGridLayout, QPushButton, QLineEdit, QLabel, QHBoxLayout, QComboBox, QTableWidget, QTableWidgetItem
+from PyQt6.QtWidgets import QApplication, QCheckBox, QFrame,QMainWindow, QWidget, QVBoxLayout, QGridLayout, QPushButton, QLineEdit, QLabel, QHBoxLayout, QComboBox, QTableWidget , QTableWidgetItem
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 import clases as cls
 import source as src
-
+################ VARIABLES IMPORTANTES #################
+user_cont = 0
+gastos_cont = 0
+users_list = []
 ################ FONTS ##################
 title_font = QFont()
 title_font.setFamily('Helvetica')
@@ -27,27 +26,14 @@ title_font.setBold(True)
 instr_font = QFont()
 instr_font.setFamily('Helvetica')
 instr_font.setPointSize(30)
-instr_font.setBold(True)
+instr_font.setBold(True)    
 
 instr2_font = QFont()
 instr2_font.setFamily('Helvetica')
 instr2_font.setPointSize(15)
-<<<<<<< HEAD
-instr2_font.setBold(True)
-=======
 instr2_font.setBold(True)    
 
->>>>>>> 0cb990efd02519b656d5a18b7dc13c778fa16da4
 ################ GUI CLASES ##################
-<<<<<<< HEAD
-
-
-class MainMenuWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Finance UP")
-        self.setMinimumSize(920, 1080)
-=======
 class startWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -56,6 +42,12 @@ class startWindow(QMainWindow):
         self.main_menu_widget = QWidget(self)
         self.main_menu_widget.setStyleSheet("background-color: #F5F5F5;")
         self.main_menu_layout = QVBoxLayout(self.main_menu_widget)
+        
+        ############## SE CORREN LAS FUNCIONES INICIALES
+        src.gastos_file_checkup() #crea el archivo para guardar los gastos
+        src.users_file_checkup() #crea el archivo de los usuarios
+        src.csv_user_to_obj(users_list)
+        
         # frame principal
         main_frame = QFrame()
         main_frame.setFrameShape(QFrame.Shape.Box)
@@ -168,10 +160,15 @@ class LogInWindow(QWidget):
         self.lineEdit2.textChanged.connect(self.on_text_changed)
 
         self.confirm_button = QPushButton("Iniciar Sesión")
-        self.confirm_button.clicked.connect(self.addUserProcess)
+        self.confirm_button.clicked.connect(self.logInProcess)
         self.confirm_button.setFont(instr2_font)
         self.confirm_button.setFixedWidth(880)
 
+        # regresar al menu principal
+        return_button = QPushButton("Regresar al menú principal")
+        return_button.setStyleSheet('border: 10px solid #4B4B4B')
+        return_button.clicked.connect(self.returnToMainMenu)
+        return_button.setFont(instr_font)
 
         #agregamos low widgets a los frames
         self.main_menu_layout.addWidget(main_frame)
@@ -183,12 +180,23 @@ class LogInWindow(QWidget):
         main_frame.layout().addWidget(label_dato2)
         main_frame.layout().addWidget(self.lineEdit2)
         main_frame.layout().addWidget(self.confirm_button)
+        main_frame.layout().addWidget(return_button)
 
     def on_text_changed(self):
-        self.confirm_button.setEnabled(bool(self.lineEdit1.text()) and bool(self.lineEdit2.text()) and bool(self.lineEdit3.text()) and bool(self.lineEdit4.text()))
+        self.confirm_button.setEnabled(bool(self.lineEdit1.text()) and bool(self.lineEdit2.text())) 
     
-    def addUserProcess(self):
-        return None
+    def logInProcess(self):
+        for user in users_list:
+            if user.nombre == self.lineEdit1.text():
+                if user.contraseña == int(self.lineEdit2.text()):
+                    self.newWindow = MainMenuWindow(self)
+                    self.newWindow.show()
+                    self.hide()
+
+    
+    def returnToMainMenu(self):
+        self.main_menu_window.show()
+        self.hide()
         
         
 class RegisterWindow(QWidget):
@@ -278,6 +286,11 @@ class RegisterWindow(QWidget):
         self.confirm_button.setFont(instr2_font)
         self.confirm_button.setFixedWidth(880)
 
+        # regresar al menu principal
+        return_button = QPushButton("Regresar al menú principal")
+        return_button.setStyleSheet('border: 10px solid #4B4B4B')
+        return_button.clicked.connect(self.returnToMainMenu)
+        return_button.setFont(instr_font)
 
         #agregamos low widgets a los frames
         self.main_menu_layout.addWidget(main_frame)
@@ -295,21 +308,38 @@ class RegisterWindow(QWidget):
         main_frame.layout().addWidget(label_dato4)
         main_frame.layout().addWidget(self.lineEdit4)
         main_frame.layout().addWidget(self.confirm_button)
+        main_frame.layout().addWidget(return_button)
 
     def on_text_changed(self):
         self.confirm_button.setEnabled(bool(self.lineEdit1.text()) and bool(self.lineEdit2.text()) and bool(self.lineEdit3.text()) and bool(self.lineEdit4.text()))
     
     def addUserProcess(self):
-        return None
-        
-        
+        nombre = self.lineEdit1.text()
+        contraseña = self.contrLine.text()
+        edad = self.lineEdit2.text()
+        fecha_nacimiento = self.lineEdit3.text()
+        ingreso_mensual = self.lineEdit4.text()
+        id = user_cont
+        #isntanciamos un usuario con los datos ingresados
+        temp_user = cls.Usuario(id,nombre,edad,contraseña,fecha_nacimiento,ingreso_mensual)
+        # lo agregamos a la lista de usuarios 
+        users_list.append(temp_user)
+        # lo agregamos al csv
+        src.add_new_user_to_csv(temp_user)
+        # en el momento en que se registra el nuevo usuario, regresamos al menu principal
+        self.returnToMainMenu()
 
+    def returnToMainMenu(self):
+        self.main_menu_window.show()
+        self.hide()
+        
+        
 class MainMenuWindow(QWidget):
     def __init__(self,main_menu_window: startWindow):
         super().__init__()
         self.setWindowTitle("My budget buddy")
         self.setMinimumSize(920,1080)
->>>>>>> emi
+        self.main_menu_window = main_menu_window
         self.main_menu_widget = QWidget(self)
         self.main_menu_widget.setStyleSheet("background-color: #F5F5F5;")
         self.main_menu_layout = QVBoxLayout(self.main_menu_widget)
@@ -341,13 +371,13 @@ class MainMenuWindow(QWidget):
         boton_opt_1.setStyleSheet('border: 2px solid #4B4B4B')
         boton_opt_1.clicked.connect(self.open_opt_1_window)
         boton_opt_1.setFixedHeight(250)
-        # boton de opcion dos
+        #boton de opcion dos
         boton_opt_2 = QPushButton("2. Ver análisis de gastos")
         boton_opt_2.setFont(instr_font)
         boton_opt_2.setStyleSheet('border: 2px solid #4B4B4B')
         boton_opt_2.setFixedHeight(250)
         boton_opt_2.clicked.connect(self.open_opt_2_window)
-        # boton de opcion tres
+        #boton de opcion tres
         boton_opt_3 = QPushButton("3. Predecir gastos")
         boton_opt_3.setFont(instr_font)
         boton_opt_3.setStyleSheet('border: 2px solid #4B4B4B')
@@ -361,7 +391,7 @@ class MainMenuWindow(QWidget):
         main_frame.layout().addWidget(boton_opt_1)
         main_frame.layout().addWidget(boton_opt_2)
         main_frame.layout().addWidget(boton_opt_3)
-        self.setCentralWidget(self.main_menu_widget)
+        #self.setCentralWidget(self.main_menu_widget)
 
     def open_opt_1_window(self):
         self.opt1_window = Opt1Window(self)
@@ -383,10 +413,10 @@ class Opt1Window(QWidget):
         self.main_menu_window = main_menu_window
         self.setStyleSheet("background-color: #F5F5F5;")
         self.setWindowTitle("1. Ingresar gastos")
-        self.setMinimumSize(920, 1080)
+        self.setMinimumSize(920,1080)
         menu1_layout = QVBoxLayout(self)
 
-        # layout
+        #layout
         main_frame = QFrame()
         main_frame.setFrameShape(QFrame.Shape.Box)
         main_frame.setLineWidth(4)
@@ -394,7 +424,7 @@ class Opt1Window(QWidget):
         main_frame.setStyleSheet('color: #3f2b17;')
 
         title_frame = QFrame()
-        title_frame.setFrameShape(QFrame.Shape.Box)
+        title_frame.setFrameShape(QFrame.Shape.Box) 
         title_frame.setLineWidth(4)
         title_frame.setLayout(QVBoxLayout())
         title_frame.setStyleSheet('color: #2F2F2F;')
@@ -403,6 +433,7 @@ class Opt1Window(QWidget):
         welcome1_label.setStyleSheet('color: #191970;')
         welcome1_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         welcome1_label.setFont(title_font)
+
 
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
@@ -420,21 +451,16 @@ class Opt1Window(QWidget):
         self.main_menu_window.show()
         self.hide()
 
-
 class Opt2Window(QWidget):
-<<<<<<< HEAD
-    def __init__(self, main_menu_window: MainMenuWindow):
-=======
     def __init__(self, main_menu_window:startWindow):
->>>>>>> emi
         super().__init__()
         self.main_menu_window = main_menu_window
         self.setStyleSheet("background-color: #F5F5F5;")
         self.setWindowTitle("1. Ingresar gastos")
-        self.setMinimumSize(920, 1080)
+        self.setMinimumSize(920,1080)
         menu1_layout = QVBoxLayout(self)
 
-        # layout
+        #layout
         main_frame = QFrame()
         main_frame.setFrameShape(QFrame.Shape.Box)
         main_frame.setLineWidth(4)
@@ -442,7 +468,7 @@ class Opt2Window(QWidget):
         main_frame.setStyleSheet('color: #3f2b17;')
 
         title_frame = QFrame()
-        title_frame.setFrameShape(QFrame.Shape.Box)
+        title_frame.setFrameShape(QFrame.Shape.Box) 
         title_frame.setLineWidth(4)
         title_frame.setLayout(QVBoxLayout())
         title_frame.setStyleSheet('color: #2F2F2F;')
@@ -451,6 +477,7 @@ class Opt2Window(QWidget):
         welcome1_label.setStyleSheet('color: #191970;')
         welcome1_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         welcome1_label.setFont(title_font)
+
 
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
@@ -464,10 +491,11 @@ class Opt2Window(QWidget):
         title_frame.layout().addWidget(welcome1_label)
         main_frame.layout().addWidget(return_button)
 
+        
+
     def returnToMainMenu(self):
         self.main_menu_window.show()
         self.hide()
-
 
 ############## VARIABLES PRINCIPALES ##################
 deskTopApp = QApplication([])
