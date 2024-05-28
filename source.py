@@ -39,7 +39,14 @@ def csv_user_to_obj(users_list):
         users_list.append(tempUser)
     return users_list
 
-#def csv_gastos_to_obj(gastos_list)
+def csv_gastos_to_obj(gastos_list):
+    gastosCSV = pd.read_csv('gastos.csv')
+    for index in range(0, gastosCSV.shape[0],1):
+        tempGasto = cls.Gasto(gastosCSV['id'][index],gastosCSV['articulo'][index],gastosCSV['id_user'][index],
+                              gastosCSV['categoria'][index],gastosCSV['precio'][index],gastosCSV['importancia'][index],
+                              gastosCSV['fecha'][index])
+        gastos_list.append(tempGasto)
+    return gastos_list
 
 def add_new_gasto_to_csv(temp_gasto = cls.Gasto):
     with open('gastos.csv', 'a', newline = "") as gastosCSV:

@@ -7,41 +7,14 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from PyQt6.QtWidgets import QApplication, QCheckBox, QFrame,QMainWindow, QWidget, QVBoxLayout, QGridLayout, QPushButton, QLineEdit, QLabel, QHBoxLayout, QComboBox, QTableWidget , QTableWidgetItem
+from PyQt6.QtWidgets import QApplication, QCheckBox, QFrame,QMainWindow, QWidget, QVBoxLayout, QGridLayout, QPushButton, QLineEdit, QLabel, QHBoxLayout, QComboBox, QTableWidget , QTableWidgetItem,QDateEdit
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 import clases as cls
 import source as src
-################ VARIABLES IMPORTANTES #################
-user_cont = 0
-gastos_cont = 0
-users_list = []
-gastos_list = []
-border_style = """
-QLineEdit {
-    border: 2px solid #4B4B4B; /* Color del borde */
-    border-radius: 5px;       /* Esquinas redondeadas */
-    padding: 10px;            /* Espacio interno */
-    font-size: 16px;          /* Tamaño de la fuente */
-}
-"""
-button_style = """
-QPushButton {
-    background-color: #8B0000; /* Color de fondo */
-    color: white;              /* Color del texto */
-    border: 2px solid #4B4B4B; /* Borde del botón */
-    border-radius: 10px;       /* Bordes redondeados */
-    padding: 10px;             /* Espacio interno */
-    font-size: 16px;           /* Tamaño de la fuente */
-}
-QPushButton:hover {
-    background-color: #A52A2A; /* Color de fondo al pasar el ratón por encima */
-}
-QPushButton:pressed {
-    background-color: #5C0000; /* Color de fondo al presionar */
-}
-"""
+import string
+
 
 
 ################ FONTS ##################
@@ -65,7 +38,7 @@ class startWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("My budget buddy")
-        self.setMinimumSize(950,1080)
+        self.setMinimumSize(920,1080)
         self.main_menu_widget = QWidget(self)
         self.main_menu_widget.setStyleSheet("background-color: #F5F5F5;")
         self.main_menu_layout = QVBoxLayout(self.main_menu_widget)
@@ -73,8 +46,8 @@ class startWindow(QMainWindow):
         ############## SE CORREN LAS FUNCIONES INICIALES
         src.gastos_file_checkup() #crea el archivo para guardar los gastos
         src.users_file_checkup() #crea el archivo de los usuarios
-        src.csv_user_to_obj(users_list)
-        
+        self.users_list = []
+        self.users_list = src.csv_user_to_obj(users_list)
         # frame principal
         main_frame = QFrame()
         main_frame.setFrameShape(QFrame.Shape.Box)
@@ -87,16 +60,11 @@ class startWindow(QMainWindow):
         title_frame.setLineWidth(4)
         title_frame.setLayout(QHBoxLayout())
         # label de titulo
-        title_label = QLabel("Bienvenido a ")
+        title_label = QLabel("Bienvenido a My Budget Buddy")
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("color: #8B0000;")
+        title_label.setStyleSheet(title_style)
 
-        title_label2 = QLabel("My Budget Buddy")
-        title_label2.setFont(title_font)
-        title_label2.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label2.setStyleSheet("color: #8B0000;")
-        
         instr1_label = QLabel("Selecciona una opción")
         instr1_label.setFont(instr_font)
         instr1_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -121,7 +89,6 @@ class startWindow(QMainWindow):
         self.main_menu_layout.addWidget(main_frame)
         main_frame.layout().addWidget(title_frame)
         title_frame.layout().addWidget(title_label)
-        title_frame.layout().addWidget(title_label2)
         main_frame.layout().addWidget(instr1_label)
         main_frame.layout().addWidget(boton_opt_1)
         main_frame.layout().addWidget(boton_opt_2)
@@ -188,6 +155,7 @@ class LogInWindow(QWidget):
         self.lineEdit2 = QLineEdit()
         self.lineEdit2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lineEdit2.setStyleSheet(border_style)
+        self.lineEdit2.setEchoMode(QLineEdit.EchoMode.Password)
         self.lineEdit2.setReadOnly(False)
         self.lineEdit2.textChanged.connect(self.on_text_changed)
 
@@ -222,8 +190,10 @@ class LogInWindow(QWidget):
     def logInProcess(self):
         for user in users_list:
             if user.nombre == self.lineEdit1.text():
-                if user.contraseña == int(self.lineEdit2.text()):
-                    self.newWindow = MainMenuWindow(self)
+                if str(user.contraseña) == str(self.lineEdit2.text()):
+                    self.newWindow = MainMenuWindow(self,user) #mandamos a la siguiente pantalla
+                    #el usuario identificado para poder operar con sus datos
+                    src.csv_gastos_to_obj(gastos_list)
                     self.newWindow.show()
                     self.hide()
 
@@ -283,6 +253,8 @@ class RegisterWindow(QWidget):
         self.contrLine = QLineEdit()
         self.contrLine.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.contrLine.setStyleSheet(border_style)
+        self.contrLine.setEchoMode(QLineEdit.EchoMode.Password)
+
         self.contrLine.setReadOnly(False)
         self.contrLine.textChanged.connect(self.on_text_changed)
 
@@ -300,13 +272,16 @@ class RegisterWindow(QWidget):
         label_dato3 = QLabel("Ingresa tu fecha de nacimiento")
         label_dato3.setFont(instr2_font)
         label_dato3.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label_dato3.setStyleSheet(date_edit_style)
         label_dato3.setStyleSheet("color: #191970;")
 
-        self.lineEdit3 = QLineEdit()
+        self.lineEdit3 = QDateEdit()
         self.lineEdit3.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit3.setStyleSheet(border_style)
+        self.lineEdit3.setStyleSheet(date_edit_style)
+        self.lineEdit3.setCalendarPopup(True)  
+        self.lineEdit3.setDisplayFormat("dd-MM-yyyy")
         self.lineEdit3.setReadOnly(False)
-        self.lineEdit3.textChanged.connect(self.on_text_changed)
+        self.lineEdit3.timeChanged.connect(self.on_text_changed)
 
         label_dato4 = QLabel("¿Cuál es tu ingreso mensual?")
         label_dato4.setFont(instr2_font)
@@ -354,13 +329,13 @@ class RegisterWindow(QWidget):
     
     def addUserProcess(self):
         nombre = self.lineEdit1.text()
-        contraseña = self.contrLine.text()
+        contraseña = str(self.contrLine.text())
         edad = self.lineEdit2.text()
         fecha_nacimiento = self.lineEdit3.text()
         ingreso_mensual = self.lineEdit4.text()
-        id = user_cont
+        id = len(users_list)
         #isntanciamos un usuario con los datos ingresados
-        temp_user = cls.Usuario(id,nombre,edad,contraseña,fecha_nacimiento,ingreso_mensual)
+        temp_user = cls.Usuario(id,nombre,contraseña,edad,fecha_nacimiento,ingreso_mensual)
         # lo agregamos a la lista de usuarios 
         users_list.append(temp_user)
         # lo agregamos al csv
@@ -373,11 +348,13 @@ class RegisterWindow(QWidget):
         self.hide()
                
 class MainMenuWindow(QWidget):
-    def __init__(self,main_menu_window: startWindow):
+    def __init__(self,main_menu_window: startWindow,user:cls.Usuario):
         super().__init__()
         self.setWindowTitle("My budget buddy")
         self.setMinimumSize(920,1080)
         self.main_menu_window = main_menu_window
+        self.user = user
+        print(user.id)
         self.main_menu_widget = QWidget(self)
         self.main_menu_widget.setStyleSheet("background-color: #F5F5F5;")
         self.main_menu_layout = QVBoxLayout(self.main_menu_widget)
@@ -393,6 +370,24 @@ class MainMenuWindow(QWidget):
         title_frame.setFrameShape(QFrame.Shape.Box)
         title_frame.setLineWidth(4)
         title_frame.setLayout(QHBoxLayout())
+        #inicio frame
+        inicio_frame = QFrame()
+        inicio_frame.setFrameShape(QFrame.Shape.Box)
+        inicio_frame.setLineWidth(4)
+        inicio_frame.setLayout(QVBoxLayout())
+        # saludos label
+        saludos_label = QLabel(f"Bienvenido {self.user.nombre}")
+        saludos_label.setFont(instr_font)
+        saludos_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        saludos_label.setStyleSheet(title_style)
+        # fecha 
+        fecha_actual = datetime.now()
+        fecha_formateada = fecha_actual.strftime("%d-%m-%Y")
+        fecha_label = QLabel(fecha_formateada)
+        fecha_label.setFont(instr_font)
+        fecha_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        fecha_label.setStyleSheet(title_style)
+
         # label de titulo
         title_label = QLabel("My Budget Buddy")
         title_label.setFont(title_font)
@@ -406,6 +401,7 @@ class MainMenuWindow(QWidget):
         # boton de opcion uno
         boton_opt_1 = QPushButton("1. Ingresar gastos")
         boton_opt_1.setFont(instr_font)
+        boton_opt_1.setMinimumWidth(875)
         boton_opt_1.setStyleSheet(button_style)
         boton_opt_1.clicked.connect(self.open_opt_1_window)
         boton_opt_1.setFixedHeight(250)
@@ -423,6 +419,9 @@ class MainMenuWindow(QWidget):
         boton_opt_3.clicked.connect(self.open_opt_3_window)
         # agregamos los widgets al layout
         self.main_menu_layout.addWidget(main_frame)
+        main_frame.layout().addWidget(inicio_frame)
+        inicio_frame.layout().addWidget(saludos_label)
+        inicio_frame.layout().addWidget(fecha_label)
         main_frame.layout().addWidget(title_frame)
         title_frame.layout().addWidget(title_label)
         main_frame.layout().addWidget(instr1_label)
@@ -432,7 +431,7 @@ class MainMenuWindow(QWidget):
         #self.setCentralWidget(self.main_menu_widget)
 
     def open_opt_1_window(self):
-        self.opt1_window = Opt1Window(self)
+        self.opt1_window = Opt1Window(self,self.user)
         self.opt1_window.show()
         self.hide()
 
@@ -445,9 +444,10 @@ class MainMenuWindow(QWidget):
         return None
 
 class Opt1Window(QWidget):
-    def __init__(self, main_menu_window: startWindow):
+    def __init__(self, main_menu_window: startWindow,user:cls.Usuario):
         super().__init__()
         self.main_menu_window = main_menu_window
+        self.user = user
         self.setStyleSheet("background-color: #F5F5F5;")
         self.setWindowTitle("1. Ingresar gastos")
         self.setMinimumSize(920,1080)
@@ -516,6 +516,7 @@ class Opt1Window(QWidget):
         self.categ_options.addItem('Entretenimiento')
         self.categ_options.addItem('Desarrollo Personal')
         self.categ_options.addItem('Otro')
+        self.categ_options.setStyleSheet(qcomboBox_style)
         
         import_label = QLabel("Selecciona un nivel de importancia: ")
         import_label.setStyleSheet('color: #191970;')
@@ -531,6 +532,7 @@ class Opt1Window(QWidget):
         self.import_options.addItem('3')
         self.import_options.addItem('4')
         self.import_options.addItem('5')
+        self.import_options.setStyleSheet(qcomboBox_style)
         
         precio_label = QLabel("Ingresa el precio pagado: ")
         precio_label.setStyleSheet('color: #191970;')
@@ -573,13 +575,23 @@ class Opt1Window(QWidget):
         main_frame.layout().addWidget(return_button)
 
     def addGastoProcess(self):
-        return None
+        id_gasto = len(gastos_list)
+        articulo = self.lineEdit_nombre.text()
+        id_user = self.user.id
+        categoria = self.categ_options.currentText()
+        precio = self.lineEdit_precio.text()
+        importancia = self.categ_options.currentText()
+        fecha_default = datetime.now()
+        fecha_formateada = fecha_default.strftime("%d-%m-%Y")
+        temp_gasto = cls.Gasto(id_gasto,id_user,articulo,precio,importancia,categoria,fecha_formateada)
+        gastos_list.append(temp_gasto)
+        src.add_new_gasto_to_csv(temp_gasto)
+
+
 
     def returnToMainMenu(self):
         self.main_menu_window.show()
         self.hide()
-
-
 
 class Opt2Window(QWidget):
     def __init__(self, main_menu_window:startWindow):
@@ -629,6 +641,123 @@ class Opt2Window(QWidget):
 
 ############## VARIABLES PRINCIPALES ##################
 deskTopApp = QApplication([])
+################ VARIABLES IMPORTANTES #################
+user_cont = 0
+gastos_cont = 0
+users_list = []
+gastos_list = []
+border_style = """
+QLineEdit {
+    border: 2px solid #4B4B4B; /* Color del borde */
+    border-radius: 5px;       /* Esquinas redondeadas */
+    padding: 10px;            /* Espacio interno */
+    font-size: 16px;          /* Tamaño de la fuente */
+}
+"""
+
+button_style = """
+QPushButton {
+    background-color: #8B0000; /* Color de fondo */
+    color: white;              /* Color del texto */
+    border: 2px solid #4B4B4B; /* Borde del botón */
+    border-radius: 10px;       /* Bordes redondeados */
+    padding: 10px;             /* Espacio interno */
+    font-size: 16px;           /* Tamaño de la fuente */
+    font-weight: bold;         /* Negrita */
+    text-align: center;        /* Alinear el texto al centro */
+    text-decoration: none;     /* Sin subrayado */
+}
+QPushButton:hover {
+    background-color: #A52A2A; /* Color de fondo al pasar el ratón por encima */
+    border: 2px solid #191970; /* Cambiar borde al color #191970 */
+    color: #FFD700;            /* Cambiar el color del texto al color dorado */
+}
+QPushButton:pressed {
+    background-color: #5C0000; /* Color de fondo al presionar */
+    border: 2px solid #191970; /* Cambiar borde al color #191970 */
+}
+"""
+    
+
+date_edit_style = """
+    QDateEdit {
+        font-size: 20px;  /* Tamaño de letra */
+        color: #333333;  /* Color del texto */
+        background-color: #f2f2f2;  /* Color de fondo */
+        border: 1px solid #cccccc;  /* Borde */
+        padding: 5px;  /* Espaciado interno */
+        border-radius: 10px;  /* Bordes redondeados */
+    }
+    QDateEdit::drop-down {
+        subcontrol-origin: padding;
+        subcontrol-position: top right;
+        width: 20px;  /* Ancho del botón desplegable */
+        border-left-width: 1px;
+        border-left-color: darkgray;
+        border-left-style: solid;  /* Estilo del borde del botón desplegable */
+        border-top-right-radius: 3px;  /* Bordes redondeados */
+        border-bottom-right-radius: 3px;  /* Bordes redondeados */
+    }
+    QDateEdit::down-arrow {
+        width: 10px;
+        height: 10px;
+    }
+    QDateEdit QAbstractItemView {
+        font-size: 18px;  /* Tamaño de letra de la vista del calendario */
+        color: #333333;  /* Color del texto de la vista del calendario */
+        background-color: #ffffff;  /* Color de fondo de la vista del calendario */
+        selection-background-color: #009688;  /* Color de fondo de la selección */
+        selection-color: #ffffff;  /* Color del texto de la selección */
+    }
+"""
+
+qcomboBox_style = """
+    QComboBox {
+        font-size: 20px;  /* Tamaño de letra */
+        color: #333333;  /* Color del texto */
+        background-color: #f2f2f2;  /* Color de fondo */
+        border: 1px solid #cccccc;  /* Borde */
+        padding: 5px;  /* Espaciado interno */
+        border-radius: 10px;  /* Bordes redondeados */
+    }
+    QComboBox::drop-down {
+        subcontrol-origin: padding;
+        subcontrol-position: top right;
+        width: 20px;  /* Ancho del botón desplegable */
+        border-left-width: 1px;
+        border-left-color: darkgray;
+        border-left-style: solid;  /* Estilo del borde del botón desplegable */
+        border-top-right-radius: 3px;  /* Bordes redondeados */
+        border-bottom-right-radius: 3px;  /* Bordes redondeados */
+    }
+    QComboBox::down-arrow {
+        width: 10px;
+        height: 10px;
+    }
+    QComboBox QAbstractItemView {
+        font-size: 18px;  /* Tamaño de letra de la vista desplegable */
+        color: #333333;  /* Color del texto de la vista desplegable */
+        background-color: #ffffff;  /* Color de fondo de la vista desplegable */
+        selection-background-color: #009688;  /* Color de fondo de la selección */
+        selection-color: #ffffff;  /* Color del texto de la selección */
+    }
+"""
+
+title_style = """
+    QLabel {
+        font-size: 36px;  /* Tamaño de letra grande */
+        font-weight: bold;  /* Negrita */
+        color: #8B0000;  /* Color del texto rojo */
+        padding: 20px;  /* Espaciado interno */
+        background-color: #ffffff;  /* Color de fondo blanco */
+        border-radius: 15px;  /* Bordes redondeados */
+        border: 3px solid #8B0000;  /* Borde rojo */
+        text-align: center;  /* Alinear al centro */
+    }
+    QLabel:hover {
+        background-color: #f0f0f0;  /* Color de fondo al pasar el mouse */
+    }
+"""
 
 ################ MAIN ####################
 
