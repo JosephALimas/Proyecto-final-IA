@@ -168,7 +168,7 @@ class LogInWindow(QWidget):
 
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
-        return_button.setStyleSheet('border: 10px solid #4B4B4B')
+        return_button.setStyleSheet(back_button_style)
         return_button.clicked.connect(self.returnToMainMenu)
         return_button.setFont(instr_font)
 
@@ -302,7 +302,7 @@ class RegisterWindow(QWidget):
 
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
-        return_button.setStyleSheet('border: 10px solid #4B4B4B')
+        return_button.setStyleSheet(back_button_style)
         return_button.clicked.connect(self.returnToMainMenu)
         return_button.setFont(instr_font)
 
@@ -374,7 +374,7 @@ class MainMenuWindow(QWidget):
         inicio_frame = QFrame()
         inicio_frame.setFrameShape(QFrame.Shape.Box)
         inicio_frame.setLineWidth(4)
-        inicio_frame.setLayout(QVBoxLayout())
+        inicio_frame.setLayout(QHBoxLayout())
         # saludos label
         saludos_label = QLabel(f"Bienvenido {self.user.nombre}")
         saludos_label.setFont(instr_font)
@@ -441,7 +441,9 @@ class MainMenuWindow(QWidget):
         self.hide()
 
     def open_opt_3_window(self):
-        return None
+        self.opt_3_window = Opt3Window(self)
+        self.opt_3_window.show()
+        self.hide()
 
 class Opt1Window(QWidget):
     def __init__(self, main_menu_window: startWindow,user:cls.Usuario):
@@ -550,9 +552,14 @@ class Opt1Window(QWidget):
         finish_button.clicked.connect(self.addGastoProcess)
         finish_button.setFont(instr_font)
 
+        restart_button = QPushButton("Borrar selecciones")
+        restart_button.setStyleSheet(button_style)
+        restart_button.clicked.connect(self.restartSelection)
+        restart_button.setFont(instr_font)
+
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
-        return_button.setStyleSheet('border: 10px solid #4B4B4B')
+        return_button.setStyleSheet(back_button_style)
         return_button.clicked.connect(self.returnToMainMenu)
         return_button.setFont(instr_font)
 
@@ -572,6 +579,7 @@ class Opt1Window(QWidget):
         main_frame.layout().addWidget(precio_label)
         main_frame.layout().addWidget(self.lineEdit_precio)
         main_frame.layout().addWidget(finish_button)
+        main_frame.layout().addWidget(restart_button)
         main_frame.layout().addWidget(return_button)
 
     def addGastoProcess(self):
@@ -587,7 +595,11 @@ class Opt1Window(QWidget):
         gastos_list.append(temp_gasto)
         src.add_new_gasto_to_csv(temp_gasto)
 
-
+    def restartSelection(self):
+        self.lineEdit_nombre.clear()
+        self.categ_options.setCurrentIndex(0)
+        self.import_options.setCurrentIndex(0)
+        self.lineEdit_precio.clear()
 
     def returnToMainMenu(self):
         self.main_menu_window.show()
@@ -623,7 +635,7 @@ class Opt2Window(QWidget):
 
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
-        return_button.setStyleSheet('border: 10px solid #4B4B4B')
+        return_button.setStyleSheet(back_button_style)
         return_button.clicked.connect(self.returnToMainMenu)
         return_button.setFont(instr_font)
 
@@ -633,7 +645,49 @@ class Opt2Window(QWidget):
         title_frame.layout().addWidget(welcome1_label)
         main_frame.layout().addWidget(return_button)
 
-        
+    def returnToMainMenu(self):
+        self.main_menu_window.show()
+        self.hide()
+
+class Opt3Window(QWidget):
+    def __init__(self,main_menu_window : startWindow):
+        super().__init__()
+        self.main_menu_window = main_menu_window
+        self.setStyleSheet("background-color: #F5F5F5;")
+        self.setWindowTitle("1. Ingresar gastos")
+        self.setMinimumSize(920,1080)
+        menu1_layout = QVBoxLayout(self)
+
+        #layout
+        main_frame = QFrame()
+        main_frame.setFrameShape(QFrame.Shape.Box)
+        main_frame.setLineWidth(4)
+        main_frame.setLayout(QVBoxLayout())
+        main_frame.setStyleSheet('color: #3f2b17;')
+
+        title_frame = QFrame()
+        title_frame.setFrameShape(QFrame.Shape.Box) 
+        title_frame.setLineWidth(4)
+        title_frame.setLayout(QVBoxLayout())
+        title_frame.setStyleSheet('color: #2F2F2F;')
+
+        welcome1_label = QLabel('Selecciona una opción')
+        welcome1_label.setStyleSheet('color: #191970;')
+        welcome1_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        welcome1_label.setFont(title_font)
+
+
+        # regresar al menu principal
+        return_button = QPushButton("Regresar al menú principal")
+        return_button.setStyleSheet(back_button_style)
+        return_button.clicked.connect(self.returnToMainMenu)
+        return_button.setFont(instr_font)
+
+        # adding widgets
+        menu1_layout.addWidget(main_frame)
+        main_frame.layout().addWidget(title_frame)
+        title_frame.layout().addWidget(welcome1_label)
+        main_frame.layout().addWidget(return_button)
 
     def returnToMainMenu(self):
         self.main_menu_window.show()
@@ -677,7 +731,29 @@ QPushButton:pressed {
     border: 2px solid #191970; /* Cambiar borde al color #191970 */
 }
 """
-    
+back_button_style = """
+QPushButton {
+    background-color: #191970; /* Color de fondo */
+    color: white;              /* Color del texto */
+    border: 2px solid #4B4B4B; /* Borde del botón */
+    border-radius: 10px;       /* Bordes redondeados */
+    padding: 10px;             /* Espacio interno */
+    font-size: 16px;           /* Tamaño de la fuente */
+    font-weight: bold;         /* Negrita */
+    text-align: center;        /* Alinear el texto al centro */
+    text-decoration: none;     /* Sin subrayado */
+}
+QPushButton:hover {
+    background-color: #1E90FF; /* Color de fondo al pasar el ratón por encima */
+    border: 2px solid #8B0000; /* Cambiar borde al color #8B0000 */
+    color: #FFD700;            /* Cambiar el color del texto al color dorado */
+}
+QPushButton:pressed {
+    background-color: #000080; /* Color de fondo al presionar */
+    border: 2px solid #8B0000; /* Cambiar borde al color #8B0000 */
+}
+"""
+
 
 date_edit_style = """
     QDateEdit {
