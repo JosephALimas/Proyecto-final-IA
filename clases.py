@@ -3,7 +3,8 @@ import pandas as pd
 import csv
 import matplotlib.pyplot as plt
 from datetime import datetime
-
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 class Usuario:
     def __init__(self, id=0, nombre="", contraseña="", edad=0, fecha_nacimiento=datetime, ingreso_mensual="", dinero_actual = 0.0):
@@ -13,6 +14,7 @@ class Usuario:
         self.edad = edad
         self.fecha_nacimiento = fecha_nacimiento
         self.ingreso_mensual = ingreso_mensual
+        self.dinero_actual = dinero_actual
 
 class Gasto:
     def __init__(self, id=0, id_user=0, articulo="", precio=0.0, importancia=0, categoria="", fecha=datetime):
@@ -23,7 +25,6 @@ class Gasto:
         self.precio = precio
         self.importancia = importancia
         self.fecha = fecha
-
 
 class FinancialBuddy:
     def __init__(self):
@@ -96,8 +97,7 @@ class FinancialBuddy:
 
         print("\nAnálisis de Gastos:")
         for gasto in self.gastos:
-            print(f"Nombre: {gasto.articulo}, Categoría: {gasto.categoria}, Importancia: {
-                  gasto.importancia}, Cantidad: {gasto.precio}, Fecha: {gasto.fecha}")
+            print(f"Nombre: {gasto.articulo}, Categoría: {gasto.categoria}, Importancia: {gasto.importancia}, Cantidad: {gasto.precio}, Fecha: {gasto.fecha}")
 
         categorias = [gasto.categoria for gasto in self.gastos]
         categoria_mas_gastos = max(set(categorias), key=categorias.count)
@@ -116,7 +116,7 @@ class FinancialBuddy:
         print(f"Balance mensual: {balance}")
         print(f"Monto actual disponible: {self.monto_actual}")
 
-        self.graficar_gastos()
+        self.graficarGastos()
 
     def graficarGastos(self):
         categorias = [gasto.categoria for gasto in self.gastos]
@@ -166,7 +166,58 @@ class FinancialBuddy:
         plt.tight_layout()
         plt.show()
 
-
 if __name__ == "__main__":
     buddy = FinancialBuddy()
     buddy.menu()
+
+class MyMplCanvas(FigureCanvas):
+    def __init__(self, lista_gastos, parent=None, width=5, height=4, dpi=100):
+        self.lista_gastos = lista_gastos
+        self.figure = Figure(figsize=(width, height), dpi=dpi)
+        super().__init__(self.figure)
+        self.setParent(parent)
+        self.plot()
+
+    def plot(self):
+        categorias = [gasto.categoria for gasto in self.lista_gastos]
+        precios = [gasto.precio for gasto in self.lista_gastos]
+
+        self.figure.clear()
+        axs = self.figure.subplots(2, 2)
+        self.figure.suptitle('Análisis de Gastos', fontsize=16)
+
+        # Gráfico de barras
+        axs[0, 0].barh(categorias, precios, color='#4169E1') 
+        axs[0, 0].set_xlabel('Cantidad de Gasto')
+        axs[0, 0].set_ylabel('Categoría')
+        axs[0, 0].set_title('Distribución de Gastos por Categoría')
+
+        # Gráfico de barras
+        cantidad_por_categoria = {}
+        for gasto in self.lista_gastos:
+            if gasto.categoria in cantidad_por_categoria:
+                cantidad_por_categoria[gasto.categoria] += gasto.precio
+            else:
+                cantidad_por_categoria[gasto.categoria] = gasto.precio
+
+        axs[0, 1].bar(cantidad_por_categoria.keys(), cantidad_por_categoria.values(), color='red') 
+        axs[0, 1].set_xlabel('Categoría')
+        axs[0, 1].set_ylabel('Cantidad Total')
+        axs[0, 1].set_title('Total de Gastos por Categoría')
+
+        # Gráfico de pastel
+        axs[1, 0].pie(cantidad_por_categoria.values(), labels=cantidad_por_categoria.keys(), autopct='%1.1f%%', colors=['blue', 'gray', 'blue', 'red'])
+        axs[1, 0].set_title('Proporción de Gastos por Categoría')
+
+        # Gráfico de líneas por orden de fecha
+        fechas_precios_ordenados = sorted(zip([gasto.fecha for gasto in self.lista_gastos], precios))
+        fechas_ordenadas = [fecha for fecha, _ in fechas_precios_ordenados]
+        precios_ordenados = [precio for _, precio in fechas_precios_ordenados]
+
+        axs[1, 1].plot(fechas_ordenadas, precios_ordenados, marker='o', color='#4169E1')  # Azul claro
+        axs[1, 1].set_xlabel('Fecha')
+        axs[1, 1].set_ylabel('Cantidad de Gasto')
+        axs[1, 1].set_title('Gastos a lo largo del tiempo')
+        axs[1, 1].tick_params(axis='x', rotation=45)
+
+        self.draw()

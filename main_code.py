@@ -1,7 +1,4 @@
 import pandas as pd
-import csv
-import sys
-import os
 from datetime import datetime
 #import requests
 import numpy as np
@@ -13,7 +10,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 import clases as cls
 import source as src
-import string
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 ################ FONTS ##################
 title_font = QFont()
@@ -366,7 +364,7 @@ class MainMenuWindow(QWidget):
         self.setMinimumSize(920,1080)
         self.main_menu_window = main_menu_window
         self.user = user
-        print(user.id)
+        print(user.id) ######################### BORRAR CUANDO SEA NECESARIO
         self.main_menu_widget = QWidget(self)
         self.main_menu_widget.setStyleSheet("background-color: #F5F5F5;")
         self.main_menu_layout = QVBoxLayout(self.main_menu_widget)
@@ -459,18 +457,18 @@ class MainMenuWindow(QWidget):
         boton_opt_1.setMinimumWidth(875)
         boton_opt_1.setStyleSheet(back_button_style)
         boton_opt_1.clicked.connect(self.open_opt_1_window)
-        boton_opt_1.setFixedHeight(250)
+        boton_opt_1.setFixedHeight(200)
         #boton de opcion dos
         boton_opt_2 = QPushButton("2. Ver análisis de gastos")
         boton_opt_2.setFont(instr_font)
         boton_opt_2.setStyleSheet(back_button_style)
-        boton_opt_2.setFixedHeight(250)
+        boton_opt_2.setFixedHeight(200)
         boton_opt_2.clicked.connect(self.open_opt_2_window)
         #boton de opcion tres
         boton_opt_3 = QPushButton("3. Predecir gastos")
         boton_opt_3.setFont(instr_font)
         boton_opt_3.setStyleSheet(back_button_style)
-        boton_opt_3.setFixedHeight(250)
+        boton_opt_3.setFixedHeight(200)
         boton_opt_3.clicked.connect(self.open_opt_3_window)
         # agregamos los widgets al layout
         self.main_menu_layout.addWidget(main_frame)
@@ -499,7 +497,8 @@ class MainMenuWindow(QWidget):
         self.hide()
 
     def open_opt_2_window(self):
-        self.opt_2_window = Opt2Window(self)
+        src.analizarGastos(gastos_list,self.user)
+        self.opt_2_window = Opt2Window(self, self.user)
         self.opt_2_window.show()
         self.hide()
 
@@ -650,8 +649,8 @@ class Opt1Window(QWidget):
         articulo = self.lineEdit_nombre.text()
         id_user = self.user.id
         categoria = self.categ_options.currentText()
-        precio = self.lineEdit_precio.text()
-        importancia = self.categ_options.currentText()
+        precio = float(self.lineEdit_precio.text())
+        importancia = self.import_options.currentText()
         fecha_default = datetime.now()
         fecha_formateada = fecha_default.strftime("%d-%m-%Y")
         temp_gasto = cls.Gasto(id_gasto,id_user,articulo,precio,importancia,categoria,fecha_formateada)
@@ -669,9 +668,10 @@ class Opt1Window(QWidget):
         self.hide()
 
 class Opt2Window(QWidget):
-    def __init__(self, main_menu_window:startWindow):
+    def __init__(self, main_menu_window:startWindow, user: cls.Usuario):
         super().__init__()
         self.main_menu_window = main_menu_window
+        self.user = user
         self.setStyleSheet("background-color: #F5F5F5;")
         self.setWindowTitle("1. Ingresar gastos")
         self.setMinimumSize(920,1080)
@@ -695,7 +695,13 @@ class Opt2Window(QWidget):
         welcome1_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         welcome1_label.setFont(title_font)
 
-
+        graf1 = cls.MyMplCanvas(gastos_list,width=5, height=4, dpi=100, )
+        frame_graficas = QFrame()
+        frame_graficas.setFrameShape(QFrame.Shape.Box) 
+        frame_graficas.setLineWidth(4)
+        frame_graficas.setLayout(QVBoxLayout())
+        frame_graficas.setStyleSheet('color: #2F2F2F;')
+        frame_graficas.setMinimumHeight(800)
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
         return_button.setStyleSheet(back_button_style)
@@ -704,9 +710,11 @@ class Opt2Window(QWidget):
 
         # adding widgets
         menu1_layout.addWidget(main_frame)
-        main_frame.layout().addWidget(title_frame)
-        title_frame.layout().addWidget(welcome1_label)
+        main_frame.layout().addWidget(frame_graficas)
+        frame_graficas.layout().addWidget(graf1)
         main_frame.layout().addWidget(return_button)
+
+
 
     def returnToMainMenu(self):
         self.main_menu_window.show()
