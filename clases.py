@@ -175,10 +175,9 @@ class FinancialBuddy:
 
     def predecirGastos(self):
         if len(self.gastos) < 2:
-            print("No hay suficientes datos para realizar la predicción.")
+            print("Por favor ingresa más datos para poder ejecutar la predicción.")
             return
 
-        # Preparar los datos para la regresión
         fechas = [gasto.fecha for gasto in self.gastos]
         precios = [gasto.precio for gasto in self.gastos]
 
@@ -191,7 +190,7 @@ class FinancialBuddy:
         model = LinearRegression()
         model.fit(fechas_ordinal, precios)
 
-        # Solicitar la fecha para la predicción
+        #
         fecha_prediccion = input(
             "Ingrese la fecha para la predicción (dd-mm-yyyy): ")
         fecha_prediccion = datetime.strptime(
@@ -211,16 +210,33 @@ class FinancialBuddy:
         else:
             print("Vas bien, tu gasto predicho está dentro de un rango manejable.")
 
+        ahorro_deseado = float(
+            input("¿Cuánto te gustaría ahorrar el próximo mes?: "))
+        gasto_ideal = total_ingresos - ahorro_deseado
+
+        if precio_predicho <= gasto_ideal:
+            print(
+                f"Es probable que logres ahorrar ${ahorro_deseado:.2f} el próximo mes.")
+        else:
+            print(
+                f"Será difícil ahorrar ${ahorro_deseado:.2f} el próximo mes con tus gastos actuales.")
+
         # Graficar la regresión lineal
         plt.scatter(fechas_ordinal, precios,
                     color='blue', label='Datos de Gastos')
         plt.plot(fechas_ordinal, model.predict(fechas_ordinal),
                  color='red', label='Regresión Lineal')
         plt.scatter([fecha_prediccion], [precio_predicho],
-                    color='green', marker='x', s=100, label='Predicción')
+                    color='darkred', marker='x', s=100, label='Predicción')
         plt.xlabel('Fecha')
         plt.ylabel('Cantidad de Gasto')
         plt.title('Predicción de Gastos')
+
+        # Ajustar el formato de la fecha en el eje x
+        plt.gca().xaxis.set_major_formatter(plt.FuncFormatter(
+            lambda x, _: datetime.fromordinal(int(x)).strftime('%d-%m-%Y')))
+        plt.gca().tick_params(axis='x', rotation=45)
+
         plt.legend()
         plt.show()
 
