@@ -198,8 +198,7 @@ class FinancialBuddy:
 
         # Realizar predicción
         precio_predicho = model.predict([[fecha_prediccion]])[0][0]
-        print(f"Para la fecha {datetime.fromordinal(fecha_prediccion).strftime(
-            '%d-%m-%Y')}, el gasto predicho es: ${precio_predicho:.2f}")
+        print(f"Para la fecha {datetime.fromordinal(fecha_prediccion).strftime('%d-%m-%Y')}, el gasto predicho es: ${precio_predicho:.2f}")
 
         # Recomendaciones y alertas
         total_ingresos = sum(self.ingresos)
