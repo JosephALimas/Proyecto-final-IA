@@ -1,8 +1,10 @@
-import datetime
 import pandas as pd
-import csv
 import matplotlib.pyplot as plt
 from datetime import datetime
+from sklearn.linear_model import LinearRegression, LogisticRegression
+import numpy as np
+import csv
+import datetime
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -119,51 +121,106 @@ class FinancialBuddy:
         self.graficarGastos()
 
     def graficarGastos(self):
-        categorias = [gasto.categoria for gasto in self.gastos]
-        precios = [gasto.precio for gasto in self.gastos]
 
-        fig, axs = plt.subplots(2, 2, figsize=(12, 8))
-        fig.suptitle('Análisis de Gastos', fontsize=16)
-
-        # Gráfico de barras
-        axs[0, 0].barh(categorias, precios, color='#4169E1')  # Azul claro
-        axs[0, 0].set_xlabel('Cantidad de Gasto')
-        axs[0, 0].set_ylabel('Categoría')
-        axs[0, 0].set_title('Distribución de Gastos por Categoría')
-
-        # Gráfico de barras
+        gastos_por_importancia = [0] * 6
         cantidad_por_categoria = {}
+
         for gasto in self.gastos:
+            # Por importancia
+            if gasto.importancia >= 0 and gasto.importancia < 6:
+                gastos_por_importancia[gasto.importancia] += gasto.precio
+            # Por categoría
             if gasto.categoria in cantidad_por_categoria:
                 cantidad_por_categoria[gasto.categoria] += gasto.precio
             else:
                 cantidad_por_categoria[gasto.categoria] = gasto.precio
 
+        fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+        fig.suptitle('Análisis de Gastos', fontsize=16)
+
+        # Graficar los gastos totales por importancia
+        axs[0, 0].bar(range(6), gastos_por_importancia, color='darkred')
+        axs[0, 0].set_xlabel('Importancia (0-5)')
+        axs[0, 0].set_ylabel('Cantidad de Gasto')
+        axs[0, 0].set_title('Gasto Total por Importancia')
+        axs[0, 0].set_xticks(range(6))
+
+        # Graficar los gastos totales por categoría
         axs[0, 1].bar(cantidad_por_categoria.keys(),
-                      cantidad_por_categoria.values(), color='red')  # Rojo
+                      cantidad_por_categoria.values(), color='red')
         axs[0, 1].set_xlabel('Categoría')
         axs[0, 1].set_ylabel('Cantidad Total')
         axs[0, 1].set_title('Total de Gastos por Categoría')
 
-        # Gráfico de pastel
-        axs[1, 0].pie(cantidad_por_categoria.values(), labels=cantidad_por_categoria.keys(
-        ), autopct='%1.1f%%', colors=['blue', 'gray', 'blue', 'red'])
+        # Graficar la proporción de gastos por categoría
+        axs[1, 0].pie(cantidad_por_categoria.values(),
+                      labels=cantidad_por_categoria.keys(), autopct='%1.1f%%')
         axs[1, 0].set_title('Proporción de Gastos por Categoría')
 
-        # Gráfico de líneas por orden de fecha
-        fechas_precios_ordenados = sorted(
-            zip([gasto.fecha for gasto in self.gastos], precios))
+        # Graficar los gastos a lo largo del tiempo
+        fechas_precios_ordenados = sorted(zip([gasto.fecha for gasto in self.gastos], [
+                                          gasto.precio for gasto in self.gastos]))
         fechas_ordenadas = [fecha for fecha, _ in fechas_precios_ordenados]
         precios_ordenados = [precio for _, precio in fechas_precios_ordenados]
-
         axs[1, 1].plot(fechas_ordenadas, precios_ordenados,
-                       marker='o', color='#4169E1')  # Azul claro
+                       marker='o', color='#4169E1')
         axs[1, 1].set_xlabel('Fecha')
         axs[1, 1].set_ylabel('Cantidad de Gasto')
         axs[1, 1].set_title('Gastos a lo largo del tiempo')
         axs[1, 1].tick_params(axis='x', rotation=45)
 
         plt.tight_layout()
+        plt.show()
+
+    def predecirGastos(self):
+        if len(self.gastos) < 2:
+            print("No hay suficientes datos para realizar la predicción.")
+            return
+
+        # Preparar los datos para la regresión
+        fechas = [gasto.fecha for gasto in self.gastos]
+        precios = [gasto.precio for gasto in self.gastos]
+
+        # Convertir las fechas a un formato numérico para la regresión
+        fechas_ordinal = np.array([fecha.toordinal()
+                                  for fecha in fechas]).reshape(-1, 1)
+        precios = np.array(precios).reshape(-1, 1)
+
+        # Inicializar y entrenar el modelo de regresión lineal
+        model = LinearRegression()
+        model.fit(fechas_ordinal, precios)
+
+        # Solicitar la fecha para la predicción
+        fecha_prediccion = input(
+            "Ingrese la fecha para la predicción (dd-mm-yyyy): ")
+        fecha_prediccion = datetime.strptime(
+            fecha_prediccion, "%d-%m-%Y").toordinal()
+
+        # Realizar predicción
+        precio_predicho = model.predict([[fecha_prediccion]])[0][0]
+        print(f"Para la fecha {datetime.fromordinal(fecha_prediccion).strftime(
+            '%d-%m-%Y')}, el gasto predicho es: ${precio_predicho:.2f}")
+
+        # Recomendaciones y alertas
+        total_ingresos = sum(self.ingresos)
+        if precio_predicho > total_ingresos:
+            print("¡Alerta! Estás gastando más de lo que ingresas mensualmente.")
+        elif precio_predicho > 0.5 * total_ingresos:
+            print("Cuidado, has rebasado más del 50% de tus ingresos mensuales.")
+        else:
+            print("Vas bien, tu gasto predicho está dentro de un rango manejable.")
+
+        # Graficar la regresión lineal
+        plt.scatter(fechas_ordinal, precios,
+                    color='blue', label='Datos de Gastos')
+        plt.plot(fechas_ordinal, model.predict(fechas_ordinal),
+                 color='red', label='Regresión Lineal')
+        plt.scatter([fecha_prediccion], [precio_predicho],
+                    color='green', marker='x', s=100, label='Predicción')
+        plt.xlabel('Fecha')
+        plt.ylabel('Cantidad de Gasto')
+        plt.title('Predicción de Gastos')
+        plt.legend()
         plt.show()
 
 if __name__ == "__main__":
