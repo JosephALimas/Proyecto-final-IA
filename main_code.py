@@ -15,8 +15,6 @@ import clases as cls
 import source as src
 import string
 
-
-
 ################ FONTS ##################
 title_font = QFont()
 title_font.setFamily('Helvetica')
@@ -796,6 +794,7 @@ QPushButton:pressed {
     border: 2px solid #191970; /* Cambiar borde al color #191970 */
 }
 """
+
 back_button_style = """
 QPushButton {
     background-color: #191970; /* Color de fondo */
@@ -818,7 +817,6 @@ QPushButton:pressed {
     border: 2px solid #8B0000; /* Cambiar borde al color #8B0000 */
 }
 """
-
 
 date_edit_style = """
     QDateEdit {
@@ -899,6 +897,7 @@ title_style = """
         background-color: #f0f0f0;  /* Color de fondo al pasar el mouse */
     }
 """
+
 progressBar_style = """
 QProgressBar {
     border: 2px solid #4B4B4B;
