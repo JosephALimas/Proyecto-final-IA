@@ -7,7 +7,7 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from PyQt6.QtWidgets import QApplication, QCheckBox, QFrame,QMainWindow, QWidget, QVBoxLayout, QGridLayout, QPushButton, QLineEdit, QLabel, QHBoxLayout, QComboBox, QTableWidget , QTableWidgetItem,QDateEdit
+from PyQt6.QtWidgets import QApplication, QCheckBox, QFrame,QMainWindow, QWidget, QVBoxLayout, QGridLayout, QPushButton, QLineEdit, QLabel, QHBoxLayout, QComboBox, QTableWidget , QTableWidgetItem,QDateEdit,QProgressBar
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
@@ -76,7 +76,7 @@ class startWindow(QMainWindow):
         boton_opt_1.setStyleSheet('border: 2px solid #4B4B4B')
         boton_opt_1.clicked.connect(self.open_opt_1_window)
         boton_opt_1.setFixedHeight(250)
-        boton_opt_1.setStyleSheet(button_style)  
+        boton_opt_1.setStyleSheet(back_button_style)  
 
         #boton de opcion dos
         boton_opt_2 = QPushButton("2. Registrarse")
@@ -294,6 +294,17 @@ class RegisterWindow(QWidget):
         self.lineEdit4.setReadOnly(False)
         self.lineEdit4.textChanged.connect(self.on_text_changed)
 
+        label_dato_dinero = QLabel("Ingresa tu dinero actual: ")
+        label_dato_dinero.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label_dato_dinero.setFont(instr2_font)
+        label_dato_dinero.setStyleSheet("color: #191970;")
+
+        self.lineEdit_dinero = QLineEdit()
+        self.lineEdit_dinero.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lineEdit_dinero.setStyleSheet(border_style)
+        self.lineEdit_dinero.setReadOnly(False)
+        self.lineEdit_dinero.textChanged.connect(self.on_text_changed)
+
         self.confirm_button = QPushButton("Registrarse")
         self.confirm_button.clicked.connect(self.addUserProcess)
         self.confirm_button.setFont(instr2_font)
@@ -321,11 +332,13 @@ class RegisterWindow(QWidget):
         main_frame.layout().addWidget(self.lineEdit3)
         main_frame.layout().addWidget(label_dato4)
         main_frame.layout().addWidget(self.lineEdit4)
+        main_frame.layout().addWidget(label_dato_dinero)
+        main_frame.layout().addWidget(self.lineEdit_dinero)
         main_frame.layout().addWidget(self.confirm_button)
         main_frame.layout().addWidget(return_button)
 
     def on_text_changed(self):
-        self.confirm_button.setEnabled(bool(self.lineEdit1.text()) and bool(self.lineEdit2.text()) and bool(self.lineEdit3.text()) and bool(self.lineEdit4.text()))
+        self.confirm_button.setEnabled(bool(self.lineEdit1.text()) and bool(self.lineEdit2.text()) and bool(self.lineEdit3.text()) and bool(self.lineEdit4.text()) and bool(self.lineEdit_dinero.text()))
     
     def addUserProcess(self):
         nombre = self.lineEdit1.text()
@@ -334,8 +347,9 @@ class RegisterWindow(QWidget):
         fecha_nacimiento = self.lineEdit3.text()
         ingreso_mensual = self.lineEdit4.text()
         id = len(users_list)
+        dinero_actual = self.lineEdit_dinero.text()
         #isntanciamos un usuario con los datos ingresados
-        temp_user = cls.Usuario(id,nombre,contraseña,edad,fecha_nacimiento,ingreso_mensual)
+        temp_user = cls.Usuario(id,nombre,contraseña,edad,fecha_nacimiento,ingreso_mensual,dinero_actual)
         # lo agregamos a la lista de usuarios 
         users_list.append(temp_user)
         # lo agregamos al csv
@@ -393,6 +407,49 @@ class MainMenuWindow(QWidget):
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("color: #8B0000;")
+        
+        # frame para el gasto
+        dinero_frame = QFrame()
+        dinero_frame.setFrameShape(QFrame.Shape.Box)
+        dinero_frame.setLineWidth(4)
+        dinero_frame.setLayout(QHBoxLayout())
+        #label de ingresos
+        ingreso_label = QLabel("Ingresos")
+        ingreso_label.setFont(instr2_font)
+        ingreso_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        ingreso_label.setStyleSheet("color: #8B0000;")
+        # label de dinero actual
+        dinero_label = QLabel(f"${self.user.dinero_actual}")
+        dinero_label.setFont(instr2_font)
+        dinero_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        dinero_label.setStyleSheet("color: #8B0000;")
+        #barra
+        barra = QProgressBar()
+        barra.setMinimum(0)
+        barra.setMaximum(self.user.dinero_actual)
+        barra.setValue(self.user.dinero_actual)
+        barra.setStyleSheet(progressBar_style)
+        # widgets para barra de gasto
+        gasto_frame = QFrame()
+        gasto_frame.setFrameShape(QFrame.Shape.Box)
+        gasto_frame.setLineWidth(4)
+        gasto_frame.setLayout(QHBoxLayout())
+        #label de ingresos
+        gasto_label = QLabel("Gastos")
+        gasto_label.setFont(instr2_font)
+        gasto_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        gasto_label.setStyleSheet("color: #8B0000;")
+        # label de dinero actual
+        dinero2_label = QLabel(f"$0") #agregar la cantidad total de gastos
+        dinero2_label.setFont(instr2_font)
+        dinero2_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        dinero2_label.setStyleSheet("color: #8B0000;")
+        #barra
+        barra2 = QProgressBar()
+        barra2.setMinimum(0)
+        barra2.setMaximum(self.user.dinero_actual)
+        barra2.setValue(0) #agregar el total de los gastos
+        barra2.setStyleSheet(progressBar_style)
         # label de instrucciones
         instr1_label = QLabel("Selecciona una opción")
         instr1_label.setFont(instr_font)
@@ -402,19 +459,19 @@ class MainMenuWindow(QWidget):
         boton_opt_1 = QPushButton("1. Ingresar gastos")
         boton_opt_1.setFont(instr_font)
         boton_opt_1.setMinimumWidth(875)
-        boton_opt_1.setStyleSheet(button_style)
+        boton_opt_1.setStyleSheet(back_button_style)
         boton_opt_1.clicked.connect(self.open_opt_1_window)
         boton_opt_1.setFixedHeight(250)
         #boton de opcion dos
         boton_opt_2 = QPushButton("2. Ver análisis de gastos")
         boton_opt_2.setFont(instr_font)
-        boton_opt_2.setStyleSheet(button_style)
+        boton_opt_2.setStyleSheet(back_button_style)
         boton_opt_2.setFixedHeight(250)
         boton_opt_2.clicked.connect(self.open_opt_2_window)
         #boton de opcion tres
         boton_opt_3 = QPushButton("3. Predecir gastos")
         boton_opt_3.setFont(instr_font)
-        boton_opt_3.setStyleSheet(button_style)
+        boton_opt_3.setStyleSheet(back_button_style)
         boton_opt_3.setFixedHeight(250)
         boton_opt_3.clicked.connect(self.open_opt_3_window)
         # agregamos los widgets al layout
@@ -424,6 +481,14 @@ class MainMenuWindow(QWidget):
         inicio_frame.layout().addWidget(fecha_label)
         main_frame.layout().addWidget(title_frame)
         title_frame.layout().addWidget(title_label)
+        main_frame.layout().addWidget(dinero_frame)
+        dinero_frame.layout().addWidget(ingreso_label)
+        dinero_frame.layout().addWidget(dinero_label)
+        main_frame.layout().addWidget(barra)
+        main_frame.layout().addWidget(gasto_frame)
+        gasto_frame.layout().addWidget(gasto_label)
+        gasto_frame.layout().addWidget(dinero2_label)
+        main_frame.layout().addWidget(barra2)
         main_frame.layout().addWidget(instr1_label)
         main_frame.layout().addWidget(boton_opt_1)
         main_frame.layout().addWidget(boton_opt_2)
@@ -834,9 +899,22 @@ title_style = """
         background-color: #f0f0f0;  /* Color de fondo al pasar el mouse */
     }
 """
+progressBar_style = """
+QProgressBar {
+    border: 2px solid #4B4B4B;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 16px;
+    color: #8B0000;
+}
+QProgressBar::chunk {
+    background-color: #8B0000;
+    width: 20px;
+}
+"""
 
 ################ MAIN ####################
 
 main_menu_window = startWindow()
 main_menu_window.show()
-deskTopApp.exec()
+deskTopApp.exec()       
