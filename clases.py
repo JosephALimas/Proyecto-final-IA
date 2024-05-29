@@ -1,8 +1,8 @@
-import datetime
 import pandas as pd
-import csv
 import matplotlib.pyplot as plt
 from datetime import datetime
+from sklearn.linear_model import LinearRegression, LogisticRegression
+import numpy as np
 
 
 class Usuario:
@@ -165,6 +165,57 @@ class FinancialBuddy:
         axs[1, 1].tick_params(axis='x', rotation=45)
 
         plt.tight_layout()
+        plt.show()
+
+    def predecirGastos(self):
+        if len(self.gastos) < 2:
+            print("No hay suficientes datos para realizar la predicción.")
+            return
+
+        # Preparar los datos para la regresión
+        fechas = [gasto.fecha for gasto in self.gastos]
+        precios = [gasto.precio for gasto in self.gastos]
+
+        # Convertir las fechas a un formato numérico para la regresión
+        fechas_ordinal = np.array([fecha.toordinal()
+                                  for fecha in fechas]).reshape(-1, 1)
+        precios = np.array(precios).reshape(-1, 1)
+
+        # Inicializar y entrenar el modelo de regresión lineal
+        model = LinearRegression()
+        model.fit(fechas_ordinal, precios)
+
+        # Solicitar la fecha para la predicción
+        fecha_prediccion = input(
+            "Ingrese la fecha para la predicción (dd-mm-yyyy): ")
+        fecha_prediccion = datetime.strptime(
+            fecha_prediccion, "%d-%m-%Y").toordinal()
+
+        # Realizar predicción
+        precio_predicho = model.predict([[fecha_prediccion]])[0][0]
+        print(f"Para la fecha {datetime.fromordinal(fecha_prediccion).strftime(
+            '%d-%m-%Y')}, el gasto predicho es: ${precio_predicho:.2f}")
+
+        # Recomendaciones y alertas
+        total_ingresos = sum(self.ingresos)
+        if precio_predicho > total_ingresos:
+            print("¡Alerta! Estás gastando más de lo que ingresas mensualmente.")
+        elif precio_predicho > 0.5 * total_ingresos:
+            print("Cuidado, has rebasado más del 50% de tus ingresos mensuales.")
+        else:
+            print("Vas bien, tu gasto predicho está dentro de un rango manejable.")
+
+        # Graficar la regresión lineal
+        plt.scatter(fechas_ordinal, precios,
+                    color='blue', label='Datos de Gastos')
+        plt.plot(fechas_ordinal, model.predict(fechas_ordinal),
+                 color='red', label='Regresión Lineal')
+        plt.scatter([fecha_prediccion], [precio_predicho],
+                    color='green', marker='x', s=100, label='Predicción')
+        plt.xlabel('Fecha')
+        plt.ylabel('Cantidad de Gasto')
+        plt.title('Predicción de Gastos')
+        plt.legend()
         plt.show()
 
 
