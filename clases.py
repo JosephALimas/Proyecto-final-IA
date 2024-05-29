@@ -90,7 +90,7 @@ class FinancialBuddy:
             print("Ingreso ingresado exitosamente.")
             break
 
-    def analizar_gastos(self):
+    def analizarGastos(self):
         if not self.gastos:
             print("No hay gastos para analizar.")
             return
