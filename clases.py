@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from sklearn.linear_model import LinearRegression, LogisticRegression
 import numpy as np
+import csv
+import datetime
 
 
 class Usuario:
@@ -117,48 +119,52 @@ class FinancialBuddy:
         print(f"Balance mensual: {balance}")
         print(f"Monto actual disponible: {self.monto_actual}")
 
-        self.graficar_gastos()
+        self.graficarGastos()
 
     def graficarGastos(self):
-        categorias = [gasto.categoria for gasto in self.gastos]
-        precios = [gasto.precio for gasto in self.gastos]
 
-        fig, axs = plt.subplots(2, 2, figsize=(12, 8))
-        fig.suptitle('Análisis de Gastos', fontsize=16)
-
-        # Gráfico de barras
-        axs[0, 0].barh(categorias, precios, color='#4169E1')  # Azul claro
-        axs[0, 0].set_xlabel('Cantidad de Gasto')
-        axs[0, 0].set_ylabel('Categoría')
-        axs[0, 0].set_title('Distribución de Gastos por Categoría')
-
-        # Gráfico de barras
+        gastos_por_importancia = [0] * 6
         cantidad_por_categoria = {}
+
         for gasto in self.gastos:
+            # Por importancia
+            if gasto.importancia >= 0 and gasto.importancia < 6:
+                gastos_por_importancia[gasto.importancia] += gasto.precio
+            # Por categoría
             if gasto.categoria in cantidad_por_categoria:
                 cantidad_por_categoria[gasto.categoria] += gasto.precio
             else:
                 cantidad_por_categoria[gasto.categoria] = gasto.precio
 
+        fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+        fig.suptitle('Análisis de Gastos', fontsize=16)
+
+        # Graficar los gastos totales por importancia
+        axs[0, 0].bar(range(6), gastos_por_importancia, color='darkred')
+        axs[0, 0].set_xlabel('Importancia (0-5)')
+        axs[0, 0].set_ylabel('Cantidad de Gasto')
+        axs[0, 0].set_title('Gasto Total por Importancia')
+        axs[0, 0].set_xticks(range(6))
+
+        # Graficar los gastos totales por categoría
         axs[0, 1].bar(cantidad_por_categoria.keys(),
-                      cantidad_por_categoria.values(), color='red')  # Rojo
+                      cantidad_por_categoria.values(), color='red')
         axs[0, 1].set_xlabel('Categoría')
         axs[0, 1].set_ylabel('Cantidad Total')
         axs[0, 1].set_title('Total de Gastos por Categoría')
 
-        # Gráfico de pastel
-        axs[1, 0].pie(cantidad_por_categoria.values(), labels=cantidad_por_categoria.keys(
-        ), autopct='%1.1f%%', colors=['blue', 'gray', 'blue', 'red'])
+        # Graficar la proporción de gastos por categoría
+        axs[1, 0].pie(cantidad_por_categoria.values(),
+                      labels=cantidad_por_categoria.keys(), autopct='%1.1f%%')
         axs[1, 0].set_title('Proporción de Gastos por Categoría')
 
-        # Gráfico de líneas por orden de fecha
-        fechas_precios_ordenados = sorted(
-            zip([gasto.fecha for gasto in self.gastos], precios))
+        # Graficar los gastos a lo largo del tiempo
+        fechas_precios_ordenados = sorted(zip([gasto.fecha for gasto in self.gastos], [
+                                          gasto.precio for gasto in self.gastos]))
         fechas_ordenadas = [fecha for fecha, _ in fechas_precios_ordenados]
         precios_ordenados = [precio for _, precio in fechas_precios_ordenados]
-
         axs[1, 1].plot(fechas_ordenadas, precios_ordenados,
-                       marker='o', color='#4169E1')  # Azul claro
+                       marker='o', color='#4169E1')
         axs[1, 1].set_xlabel('Fecha')
         axs[1, 1].set_ylabel('Cantidad de Gasto')
         axs[1, 1].set_title('Gastos a lo largo del tiempo')
