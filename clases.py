@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from datetime import datetime
+from datetime import datetime, strptime
 from sklearn.linear_model import LinearRegression, LogisticRegression
 import numpy as np
 import csv
