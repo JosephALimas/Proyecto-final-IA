@@ -343,7 +343,7 @@ class RegisterWindow(QWidget):
         fecha_nacimiento = self.lineEdit3.text()
         ingreso_mensual = self.lineEdit4.text()
         id = len(users_list)
-        dinero_actual = self.lineEdit_dinero.text()
+        dinero_actual = float(self.lineEdit_dinero.text())
         #isntanciamos un usuario con los datos ingresados
         temp_user = cls.Usuario(id,nombre,contraseña,edad,fecha_nacimiento,ingreso_mensual,dinero_actual)
         # lo agregamos a la lista de usuarios 
@@ -422,8 +422,8 @@ class MainMenuWindow(QWidget):
         #barra
         barra = QProgressBar()
         barra.setMinimum(0)
-        barra.setMaximum(self.user.dinero_actual)
-        barra.setValue(self.user.dinero_actual)
+        barra.setMaximum(int(self.user.dinero_actual))
+        barra.setValue(int(self.user.dinero_actual))
         barra.setStyleSheet(progressBar_style)
         # widgets para barra de gasto
         gasto_frame = QFrame()
@@ -443,7 +443,7 @@ class MainMenuWindow(QWidget):
         #barra
         barra2 = QProgressBar()
         barra2.setMinimum(0)
-        barra2.setMaximum(self.user.dinero_actual)
+        barra2.setMaximum(int(self.user.dinero_actual))
         barra2.setValue(0) #agregar el total de los gastos
         barra2.setStyleSheet(progressBar_style)
         # label de instrucciones
@@ -503,7 +503,7 @@ class MainMenuWindow(QWidget):
         self.hide()
 
     def open_opt_3_window(self):
-        self.opt_3_window = Opt3Window(self)
+        self.opt_3_window = Opt3Window(self,self.user)
         self.opt_3_window.show()
         self.hide()
 
@@ -656,6 +656,8 @@ class Opt1Window(QWidget):
         temp_gasto = cls.Gasto(id_gasto,id_user,articulo,precio,importancia,categoria,fecha_formateada)
         gastos_list.append(temp_gasto)
         src.add_new_gasto_to_csv(temp_gasto)
+        self.user.dinero_actual = self.user.dinero_actual - precio
+        src.modify_precio_csv(self.user)
 
     def restartSelection(self):
         self.lineEdit_nombre.clear()
@@ -721,20 +723,21 @@ class Opt2Window(QWidget):
         self.hide()
 
 class Opt3Window(QWidget):
-    def __init__(self,main_menu_window : startWindow):
+    def __init__(self,main_menu_window : startWindow,user:cls.Usuario):
         super().__init__()
         self.main_menu_window = main_menu_window
+        self.user = user
         self.setStyleSheet("background-color: #F5F5F5;")
         self.setWindowTitle("1. Ingresar gastos")
         self.setMinimumSize(920,1080)
         menu1_layout = QVBoxLayout(self)
 
         #layout
-        main_frame = QFrame()
-        main_frame.setFrameShape(QFrame.Shape.Box)
-        main_frame.setLineWidth(4)
-        main_frame.setLayout(QVBoxLayout())
-        main_frame.setStyleSheet('color: #3f2b17;')
+        self.main_frame = QFrame()
+        self.main_frame.setFrameShape(QFrame.Shape.Box)
+        self.main_frame.setLineWidth(4)
+        self.main_frame.setLayout(QVBoxLayout())
+        self.main_frame.setStyleSheet('color: #3f2b17;')
 
         title_frame = QFrame()
         title_frame.setFrameShape(QFrame.Shape.Box) 
@@ -742,11 +745,28 @@ class Opt3Window(QWidget):
         title_frame.setLayout(QVBoxLayout())
         title_frame.setStyleSheet('color: #2F2F2F;')
 
-        welcome1_label = QLabel('Selecciona una opción')
-        welcome1_label.setStyleSheet('color: #191970;')
-        welcome1_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        welcome1_label.setFont(title_font)
+        fecha_label = QLabel("Ingresa una fecha para predecir")
+        fecha_label.setStyleSheet('color: #191970;')
+        fecha_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        fecha_label.setFont(instr2_font)
 
+        self.dateline = QDateEdit()
+        self.dateline.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.dateline.setStyleSheet(date_edit_style)
+        self.dateline.setCalendarPopup(True)  
+        self.dateline.setDisplayFormat("dd-MM-yyyy")
+        self.dateline.setReadOnly(False)
+
+        predict_label = QPushButton("Predecir")
+        predict_label.setStyleSheet(back_button_style)
+        predict_label.clicked.connect(self.predict)
+        predict_label.setFont(instr_font)
+        
+        # regresar al menu principal
+        self.return_button = QPushButton("Regresar al menú principal")
+        self.return_button.setStyleSheet(back_button_style)
+        self.return_button.clicked.connect(self.returnToMainMenu)
+        self.return_button.setFont(instr_font)
 
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
@@ -755,10 +775,46 @@ class Opt3Window(QWidget):
         return_button.setFont(instr_font)
 
         # adding widgets
-        menu1_layout.addWidget(main_frame)
-        main_frame.layout().addWidget(title_frame)
-        title_frame.layout().addWidget(welcome1_label)
-        main_frame.layout().addWidget(return_button)
+        menu1_layout.addWidget(self.main_frame)
+        self.main_frame.layout().addWidget(fecha_label)
+        self.main_frame.layout().addWidget(self.dateline)
+        self.main_frame.layout().addWidget(predict_label)
+        self.main_frame.layout().addWidget(return_button)
+
+    def predict(self):
+        
+        self.graf1 = cls.MyMplCanvas2(gastos_list,self.dateline.text(),self.user,width=5, height=4, dpi=100, )
+        fecha_label2 = QLabel(self.graf1.fecha_gasto_text)
+        fecha_label2.setStyleSheet('color: #191970;')
+        fecha_label2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        fecha_label2.setFont(instr2_font)
+
+        # Recomendaciones y alertas
+        total_ingresos = self.user.dinero_actual  # SE TIENE QUE CAMBIAR
+        mensaje = ""
+        if self.graf1.precio_predicho > total_ingresos:
+            mensaje = ("¡Alerta! Estás gastando más de lo que ingresas mensualmente.")
+        elif self.graf1.precio_predicho > 0.5 * total_ingresos:
+            mensaje = ("Cuidado, has rebasado más del 50% de tus ingresos mensuales.")
+        else:
+            mensaje = ("Vas bien, tu gasto predicho está dentro de un rango manejable.")
+        mensaje_label = QLabel(mensaje)
+        mensaje_label.setStyleSheet('color: #191970;')
+        mensaje_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        mensaje_label.setFont(instr2_font)
+
+
+        frame_graficas = QFrame()
+        frame_graficas.setFrameShape(QFrame.Shape.Box) 
+        frame_graficas.setLineWidth(4)
+        frame_graficas.setLayout(QVBoxLayout())
+        frame_graficas.setStyleSheet('color: #2F2F2F;')
+        frame_graficas.setMinimumHeight(800)
+        self.main_frame.layout().addWidget(frame_graficas)
+        frame_graficas.layout().addWidget(self.graf1)
+        frame_graficas.layout().addWidget(fecha_label2)
+        frame_graficas.layout().addWidget(mensaje_label)
+
 
     def returnToMainMenu(self):
         self.main_menu_window.show()

@@ -4,7 +4,7 @@ from datetime import datetime
 from sklearn.linear_model import LinearRegression, LogisticRegression
 import numpy as np
 import csv
-import datetime
+from datetime import datetime
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -230,50 +230,108 @@ class MyMplCanvas(FigureCanvas):
     def __init__(self, lista_gastos, parent=None, width=5, height=4, dpi=100):
         self.lista_gastos = lista_gastos
         self.figure = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = self.figure.add_subplot(111)
         super().__init__(self.figure)
         self.setParent(parent)
         self.plot()
 
     def plot(self):
-        categorias = [gasto.categoria for gasto in self.lista_gastos]
-        precios = [gasto.precio for gasto in self.lista_gastos]
-
         self.figure.clear()
-        axs = self.figure.subplots(2, 2)
-        self.figure.suptitle('Análisis de Gastos', fontsize=16)
-
-        # Gráfico de barras
-        axs[0, 0].barh(categorias, precios, color='#4169E1') 
-        axs[0, 0].set_xlabel('Cantidad de Gasto')
-        axs[0, 0].set_ylabel('Categoría')
-        axs[0, 0].set_title('Distribución de Gastos por Categoría')
-
-        # Gráfico de barras
+        gastos_por_importancia = [0] * 6
         cantidad_por_categoria = {}
+
         for gasto in self.lista_gastos:
+            # Por importancia
+            if gasto.importancia >= 0 and gasto.importancia < 6:
+                gastos_por_importancia[gasto.importancia] += gasto.precio
+            # Por categoría
             if gasto.categoria in cantidad_por_categoria:
                 cantidad_por_categoria[gasto.categoria] += gasto.precio
             else:
                 cantidad_por_categoria[gasto.categoria] = gasto.precio
 
-        axs[0, 1].bar(cantidad_por_categoria.keys(), cantidad_por_categoria.values(), color='red') 
+        axs = self.figure.subplots(2, 2)
+        self.figure.suptitle('Análisis de Gastos', fontsize=16)
+
+        # Graficar los gastos totales por importancia
+        axs[0, 0].bar(range(6), gastos_por_importancia, color='darkred')
+        axs[0, 0].set_xlabel('Importancia (0-5)')
+        axs[0, 0].set_ylabel('Cantidad de Gasto')
+        axs[0, 0].set_title('Gasto Total por Importancia')
+        axs[0, 0].set_xticks(range(6))
+
+        # Graficar los gastos totales por categoría
+        axs[0, 1].bar(cantidad_por_categoria.keys(),
+                      cantidad_por_categoria.values(), color='red')
         axs[0, 1].set_xlabel('Categoría')
         axs[0, 1].set_ylabel('Cantidad Total')
         axs[0, 1].set_title('Total de Gastos por Categoría')
 
-        # Gráfico de pastel
-        axs[1, 0].pie(cantidad_por_categoria.values(), labels=cantidad_por_categoria.keys(), autopct='%1.1f%%', colors=['blue', 'gray', 'blue', 'red'])
+        # Graficar la proporción de gastos por categoría
+        axs[1, 0].pie(cantidad_por_categoria.values(),
+                      labels=cantidad_por_categoria.keys(), autopct='%1.1f%%')
         axs[1, 0].set_title('Proporción de Gastos por Categoría')
 
-        # Gráfico de líneas por orden de fecha
-        fechas_precios_ordenados = sorted(zip([gasto.fecha for gasto in self.lista_gastos], precios))
+        # Graficar los gastos a lo largo del tiempo
+        fechas_precios_ordenados = sorted(
+            zip([gasto.fecha for gasto in self.lista_gastos], [gasto.precio for gasto in self.lista_gastos]))
         fechas_ordenadas = [fecha for fecha, _ in fechas_precios_ordenados]
         precios_ordenados = [precio for _, precio in fechas_precios_ordenados]
-
-        axs[1, 1].plot(fechas_ordenadas, precios_ordenados, marker='o', color='#4169E1')  # Azul claro
+        axs[1, 1].plot(fechas_ordenadas, precios_ordenados,
+                       marker='o', color='#4169E1')
         axs[1, 1].set_xlabel('Fecha')
         axs[1, 1].set_ylabel('Cantidad de Gasto')
         axs[1, 1].set_title('Gastos a lo largo del tiempo')
         axs[1, 1].tick_params(axis='x', rotation=45)
 
         self.draw()
+
+class MyMplCanvas2(FigureCanvas):
+    def __init__(self, lista_gastos,fecha,user:Usuario, parent=None, width=5, height=4, dpi=100):
+        self.lista_gastos = lista_gastos
+        self.user = user
+        self.fecha = fecha
+        self.precio_predicho = 0.0
+        self.figure = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = self.figure.add_subplot(111)
+        super().__init__(self.figure)
+        self.setParent(parent)
+        self.plot()
+
+    def plot(self):
+        if len(self.lista_gastos) < 2:
+            print("No hay suficientes datos para realizar la predicción.")
+            return
+
+        # Preparar los datos para la regresión
+        fechas = [datetime.strptime(gasto.fecha, "%d-%m-%Y") for gasto in self.lista_gastos]
+        precios = [gasto.precio for gasto in self.lista_gastos]
+
+        # Convertir las fechas a un formato numérico para la regresión
+        fechas_ordinal = np.array([fecha.toordinal() for fecha in fechas]).reshape(-1, 1)
+        precios = np.array(precios).reshape(-1, 1)
+
+        # Inicializar y entrenar el modelo de regresión lineal
+        model = LinearRegression()
+        model.fit(fechas_ordinal, precios)
+
+        # Solicitar la fecha para la predicción
+        fecha_prediccion = datetime.strptime(self.fecha, "%d-%m-%Y").toordinal()
+
+        # Realizar predicción
+        self.precio_predicho = model.predict([[fecha_prediccion]])[0][0]
+        self.fecha_gasto_text = (f"Para la fecha {datetime.fromordinal(fecha_prediccion).strftime('%d-%m-%Y')}, el gasto predicho es: ${self.precio_predicho:.2f}")
+
+        # Graficar la regresión lineal
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        ax.scatter(fechas_ordinal, precios, color='blue', label='Datos de Gastos')
+        ax.plot(fechas_ordinal, model.predict(fechas_ordinal), color='red', label='Regresión Lineal')
+        ax.scatter([fecha_prediccion], [self.precio_predicho], color='green', marker='x', s=100, label='Predicción')
+        ax.set_xlabel('Fecha')
+        ax.set_ylabel('Cantidad de Gasto')
+        ax.set_title('Predicción de Gastos')
+        ax.legend()
+        self.draw()
+
+
