@@ -174,11 +174,11 @@ class FinancialBuddy:
 
     def predecirGastos(self):
         if len(self.gastos) < 2:
-            print("No hay suficientes datos para realizar la predicción.")
+            print("No hay suficientes datos para realizar la predicción.") 
             return
 
-        # Preparar los datos para la regresión
-        fechas = [gasto.fecha for gasto in self.gastos]
+        # Preparar los datos para la regresión 
+        fechas = [gasto.fecha for gasto in self.gastos] 
         precios = [gasto.precio for gasto in self.gastos]
 
         # Convertir las fechas a un formato numérico para la regresión
