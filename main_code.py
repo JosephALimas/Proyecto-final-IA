@@ -1,21 +1,17 @@
 import pandas as pd
-import csv
-import sys
-import os
 from datetime import datetime
 #import requests
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from PyQt6.QtWidgets import QApplication, QCheckBox, QFrame,QMainWindow, QWidget, QVBoxLayout, QGridLayout, QPushButton, QLineEdit, QLabel, QHBoxLayout, QComboBox, QTableWidget , QTableWidgetItem,QDateEdit
+from PyQt6.QtWidgets import QApplication, QCheckBox, QFrame,QMainWindow, QWidget, QVBoxLayout, QGridLayout, QPushButton, QLineEdit, QLabel, QHBoxLayout, QComboBox, QTableWidget , QTableWidgetItem,QDateEdit,QProgressBar
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 import clases as cls
 import source as src
-import string
-
-
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 ################ FONTS ##################
 title_font = QFont()
@@ -76,7 +72,7 @@ class startWindow(QMainWindow):
         boton_opt_1.setStyleSheet('border: 2px solid #4B4B4B')
         boton_opt_1.clicked.connect(self.open_opt_1_window)
         boton_opt_1.setFixedHeight(250)
-        boton_opt_1.setStyleSheet(button_style)  
+        boton_opt_1.setStyleSheet(back_button_style)  
 
         #boton de opcion dos
         boton_opt_2 = QPushButton("2. Registrarse")
@@ -168,7 +164,7 @@ class LogInWindow(QWidget):
 
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
-        return_button.setStyleSheet('border: 10px solid #4B4B4B')
+        return_button.setStyleSheet(back_button_style)
         return_button.clicked.connect(self.returnToMainMenu)
         return_button.setFont(instr_font)
 
@@ -294,6 +290,17 @@ class RegisterWindow(QWidget):
         self.lineEdit4.setReadOnly(False)
         self.lineEdit4.textChanged.connect(self.on_text_changed)
 
+        label_dato_dinero = QLabel("Ingresa tu dinero actual: ")
+        label_dato_dinero.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label_dato_dinero.setFont(instr2_font)
+        label_dato_dinero.setStyleSheet("color: #191970;")
+
+        self.lineEdit_dinero = QLineEdit()
+        self.lineEdit_dinero.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lineEdit_dinero.setStyleSheet(border_style)
+        self.lineEdit_dinero.setReadOnly(False)
+        self.lineEdit_dinero.textChanged.connect(self.on_text_changed)
+
         self.confirm_button = QPushButton("Registrarse")
         self.confirm_button.clicked.connect(self.addUserProcess)
         self.confirm_button.setFont(instr2_font)
@@ -302,7 +309,7 @@ class RegisterWindow(QWidget):
 
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
-        return_button.setStyleSheet('border: 10px solid #4B4B4B')
+        return_button.setStyleSheet(back_button_style)
         return_button.clicked.connect(self.returnToMainMenu)
         return_button.setFont(instr_font)
 
@@ -321,11 +328,13 @@ class RegisterWindow(QWidget):
         main_frame.layout().addWidget(self.lineEdit3)
         main_frame.layout().addWidget(label_dato4)
         main_frame.layout().addWidget(self.lineEdit4)
+        main_frame.layout().addWidget(label_dato_dinero)
+        main_frame.layout().addWidget(self.lineEdit_dinero)
         main_frame.layout().addWidget(self.confirm_button)
         main_frame.layout().addWidget(return_button)
 
     def on_text_changed(self):
-        self.confirm_button.setEnabled(bool(self.lineEdit1.text()) and bool(self.lineEdit2.text()) and bool(self.lineEdit3.text()) and bool(self.lineEdit4.text()))
+        self.confirm_button.setEnabled(bool(self.lineEdit1.text()) and bool(self.lineEdit2.text()) and bool(self.lineEdit3.text()) and bool(self.lineEdit4.text()) and bool(self.lineEdit_dinero.text()))
     
     def addUserProcess(self):
         nombre = self.lineEdit1.text()
@@ -334,8 +343,9 @@ class RegisterWindow(QWidget):
         fecha_nacimiento = self.lineEdit3.text()
         ingreso_mensual = self.lineEdit4.text()
         id = len(users_list)
+        dinero_actual = float(self.lineEdit_dinero.text())
         #isntanciamos un usuario con los datos ingresados
-        temp_user = cls.Usuario(id,nombre,contraseña,edad,fecha_nacimiento,ingreso_mensual)
+        temp_user = cls.Usuario(id,nombre,contraseña,edad,fecha_nacimiento,ingreso_mensual,dinero_actual)
         # lo agregamos a la lista de usuarios 
         users_list.append(temp_user)
         # lo agregamos al csv
@@ -354,7 +364,7 @@ class MainMenuWindow(QWidget):
         self.setMinimumSize(920,1080)
         self.main_menu_window = main_menu_window
         self.user = user
-        print(user.id)
+        print(user.id) ######################### BORRAR CUANDO SEA NECESARIO
         self.main_menu_widget = QWidget(self)
         self.main_menu_widget.setStyleSheet("background-color: #F5F5F5;")
         self.main_menu_layout = QVBoxLayout(self.main_menu_widget)
@@ -374,7 +384,7 @@ class MainMenuWindow(QWidget):
         inicio_frame = QFrame()
         inicio_frame.setFrameShape(QFrame.Shape.Box)
         inicio_frame.setLineWidth(4)
-        inicio_frame.setLayout(QVBoxLayout())
+        inicio_frame.setLayout(QHBoxLayout())
         # saludos label
         saludos_label = QLabel(f"Bienvenido {self.user.nombre}")
         saludos_label.setFont(instr_font)
@@ -393,6 +403,49 @@ class MainMenuWindow(QWidget):
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("color: #8B0000;")
+        
+        # frame para el gasto
+        dinero_frame = QFrame()
+        dinero_frame.setFrameShape(QFrame.Shape.Box)
+        dinero_frame.setLineWidth(4)
+        dinero_frame.setLayout(QHBoxLayout())
+        #label de ingresos
+        ingreso_label = QLabel("Ingresos")
+        ingreso_label.setFont(instr2_font)
+        ingreso_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        ingreso_label.setStyleSheet("color: #8B0000;")
+        # label de dinero actual
+        dinero_label = QLabel(f"${self.user.dinero_actual}")
+        dinero_label.setFont(instr2_font)
+        dinero_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        dinero_label.setStyleSheet("color: #8B0000;")
+        #barra
+        barra = QProgressBar()
+        barra.setMinimum(0)
+        barra.setMaximum(int(self.user.dinero_actual))
+        barra.setValue(int(self.user.dinero_actual))
+        barra.setStyleSheet(progressBar_style)
+        # widgets para barra de gasto
+        gasto_frame = QFrame()
+        gasto_frame.setFrameShape(QFrame.Shape.Box)
+        gasto_frame.setLineWidth(4)
+        gasto_frame.setLayout(QHBoxLayout())
+        #label de ingresos
+        gasto_label = QLabel("Gastos")
+        gasto_label.setFont(instr2_font)
+        gasto_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        gasto_label.setStyleSheet("color: #8B0000;")
+        # label de dinero actual
+        dinero2_label = QLabel(f"$0") #agregar la cantidad total de gastos
+        dinero2_label.setFont(instr2_font)
+        dinero2_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        dinero2_label.setStyleSheet("color: #8B0000;")
+        #barra
+        barra2 = QProgressBar()
+        barra2.setMinimum(0)
+        barra2.setMaximum(int(self.user.dinero_actual))
+        barra2.setValue(0) #agregar el total de los gastos
+        barra2.setStyleSheet(progressBar_style)
         # label de instrucciones
         instr1_label = QLabel("Selecciona una opción")
         instr1_label.setFont(instr_font)
@@ -402,20 +455,20 @@ class MainMenuWindow(QWidget):
         boton_opt_1 = QPushButton("1. Ingresar gastos")
         boton_opt_1.setFont(instr_font)
         boton_opt_1.setMinimumWidth(875)
-        boton_opt_1.setStyleSheet(button_style)
+        boton_opt_1.setStyleSheet(back_button_style)
         boton_opt_1.clicked.connect(self.open_opt_1_window)
-        boton_opt_1.setFixedHeight(250)
+        boton_opt_1.setFixedHeight(200)
         #boton de opcion dos
         boton_opt_2 = QPushButton("2. Ver análisis de gastos")
         boton_opt_2.setFont(instr_font)
-        boton_opt_2.setStyleSheet(button_style)
-        boton_opt_2.setFixedHeight(250)
+        boton_opt_2.setStyleSheet(back_button_style)
+        boton_opt_2.setFixedHeight(200)
         boton_opt_2.clicked.connect(self.open_opt_2_window)
         #boton de opcion tres
         boton_opt_3 = QPushButton("3. Predecir gastos")
         boton_opt_3.setFont(instr_font)
-        boton_opt_3.setStyleSheet(button_style)
-        boton_opt_3.setFixedHeight(250)
+        boton_opt_3.setStyleSheet(back_button_style)
+        boton_opt_3.setFixedHeight(200)
         boton_opt_3.clicked.connect(self.open_opt_3_window)
         # agregamos los widgets al layout
         self.main_menu_layout.addWidget(main_frame)
@@ -424,6 +477,14 @@ class MainMenuWindow(QWidget):
         inicio_frame.layout().addWidget(fecha_label)
         main_frame.layout().addWidget(title_frame)
         title_frame.layout().addWidget(title_label)
+        main_frame.layout().addWidget(dinero_frame)
+        dinero_frame.layout().addWidget(ingreso_label)
+        dinero_frame.layout().addWidget(dinero_label)
+        main_frame.layout().addWidget(barra)
+        main_frame.layout().addWidget(gasto_frame)
+        gasto_frame.layout().addWidget(gasto_label)
+        gasto_frame.layout().addWidget(dinero2_label)
+        main_frame.layout().addWidget(barra2)
         main_frame.layout().addWidget(instr1_label)
         main_frame.layout().addWidget(boton_opt_1)
         main_frame.layout().addWidget(boton_opt_2)
@@ -436,12 +497,15 @@ class MainMenuWindow(QWidget):
         self.hide()
 
     def open_opt_2_window(self):
-        self.opt_2_window = Opt2Window(self)
+        src.analizarGastos(gastos_list,self.user)
+        self.opt_2_window = Opt2Window(self, self.user)
         self.opt_2_window.show()
         self.hide()
 
     def open_opt_3_window(self):
-        return None
+        self.opt_3_window = Opt3Window(self,self.user)
+        self.opt_3_window.show()
+        self.hide()
 
 class Opt1Window(QWidget):
     def __init__(self, main_menu_window: startWindow,user:cls.Usuario):
@@ -550,9 +614,14 @@ class Opt1Window(QWidget):
         finish_button.clicked.connect(self.addGastoProcess)
         finish_button.setFont(instr_font)
 
+        restart_button = QPushButton("Borrar selecciones")
+        restart_button.setStyleSheet(button_style)
+        restart_button.clicked.connect(self.restartSelection)
+        restart_button.setFont(instr_font)
+
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
-        return_button.setStyleSheet('border: 10px solid #4B4B4B')
+        return_button.setStyleSheet(back_button_style)
         return_button.clicked.connect(self.returnToMainMenu)
         return_button.setFont(instr_font)
 
@@ -572,6 +641,7 @@ class Opt1Window(QWidget):
         main_frame.layout().addWidget(precio_label)
         main_frame.layout().addWidget(self.lineEdit_precio)
         main_frame.layout().addWidget(finish_button)
+        main_frame.layout().addWidget(restart_button)
         main_frame.layout().addWidget(return_button)
 
     def addGastoProcess(self):
@@ -579,24 +649,31 @@ class Opt1Window(QWidget):
         articulo = self.lineEdit_nombre.text()
         id_user = self.user.id
         categoria = self.categ_options.currentText()
-        precio = self.lineEdit_precio.text()
-        importancia = self.categ_options.currentText()
+        precio = float(self.lineEdit_precio.text())
+        importancia = self.import_options.currentText()
         fecha_default = datetime.now()
         fecha_formateada = fecha_default.strftime("%d-%m-%Y")
         temp_gasto = cls.Gasto(id_gasto,id_user,articulo,precio,importancia,categoria,fecha_formateada)
         gastos_list.append(temp_gasto)
         src.add_new_gasto_to_csv(temp_gasto)
+        self.user.dinero_actual = self.user.dinero_actual - precio
+        src.modify_precio_csv(self.user)
 
-
+    def restartSelection(self):
+        self.lineEdit_nombre.clear()
+        self.categ_options.setCurrentIndex(0)
+        self.import_options.setCurrentIndex(0)
+        self.lineEdit_precio.clear()
 
     def returnToMainMenu(self):
         self.main_menu_window.show()
         self.hide()
 
 class Opt2Window(QWidget):
-    def __init__(self, main_menu_window:startWindow):
+    def __init__(self, main_menu_window:startWindow, user: cls.Usuario):
         super().__init__()
         self.main_menu_window = main_menu_window
+        self.user = user
         self.setStyleSheet("background-color: #F5F5F5;")
         self.setWindowTitle("1. Ingresar gastos")
         self.setMinimumSize(920,1080)
@@ -620,20 +697,124 @@ class Opt2Window(QWidget):
         welcome1_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         welcome1_label.setFont(title_font)
 
-
+        graf1 = cls.MyMplCanvas(gastos_list,width=5, height=4, dpi=100, )
+        frame_graficas = QFrame()
+        frame_graficas.setFrameShape(QFrame.Shape.Box) 
+        frame_graficas.setLineWidth(4)
+        frame_graficas.setLayout(QVBoxLayout())
+        frame_graficas.setStyleSheet('color: #2F2F2F;')
+        frame_graficas.setMinimumHeight(800)
         # regresar al menu principal
         return_button = QPushButton("Regresar al menú principal")
-        return_button.setStyleSheet('border: 10px solid #4B4B4B')
+        return_button.setStyleSheet(back_button_style)
         return_button.clicked.connect(self.returnToMainMenu)
         return_button.setFont(instr_font)
 
         # adding widgets
         menu1_layout.addWidget(main_frame)
-        main_frame.layout().addWidget(title_frame)
-        title_frame.layout().addWidget(welcome1_label)
+        main_frame.layout().addWidget(frame_graficas)
+        frame_graficas.layout().addWidget(graf1)
         main_frame.layout().addWidget(return_button)
 
+
+
+    def returnToMainMenu(self):
+        self.main_menu_window.show()
+        self.hide()
+
+class Opt3Window(QWidget):
+    def __init__(self,main_menu_window : startWindow,user:cls.Usuario):
+        super().__init__()
+        self.main_menu_window = main_menu_window
+        self.user = user
+        self.setStyleSheet("background-color: #F5F5F5;")
+        self.setWindowTitle("1. Ingresar gastos")
+        self.setMinimumSize(920,1080)
+        menu1_layout = QVBoxLayout(self)
+
+        #layout
+        self.main_frame = QFrame()
+        self.main_frame.setFrameShape(QFrame.Shape.Box)
+        self.main_frame.setLineWidth(4)
+        self.main_frame.setLayout(QVBoxLayout())
+        self.main_frame.setStyleSheet('color: #3f2b17;')
+
+        title_frame = QFrame()
+        title_frame.setFrameShape(QFrame.Shape.Box) 
+        title_frame.setLineWidth(4)
+        title_frame.setLayout(QVBoxLayout())
+        title_frame.setStyleSheet('color: #2F2F2F;')
+
+        fecha_label = QLabel("Ingresa una fecha para predecir")
+        fecha_label.setStyleSheet('color: #191970;')
+        fecha_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        fecha_label.setFont(instr2_font)
+
+        self.dateline = QDateEdit()
+        self.dateline.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.dateline.setStyleSheet(date_edit_style)
+        self.dateline.setCalendarPopup(True)  
+        self.dateline.setDisplayFormat("dd-MM-yyyy")
+        self.dateline.setReadOnly(False)
+
+        predict_label = QPushButton("Predecir")
+        predict_label.setStyleSheet(back_button_style)
+        predict_label.clicked.connect(self.predict)
+        predict_label.setFont(instr_font)
         
+        # regresar al menu principal
+        self.return_button = QPushButton("Regresar al menú principal")
+        self.return_button.setStyleSheet(back_button_style)
+        self.return_button.clicked.connect(self.returnToMainMenu)
+        self.return_button.setFont(instr_font)
+
+        # regresar al menu principal
+        return_button = QPushButton("Regresar al menú principal")
+        return_button.setStyleSheet(back_button_style)
+        return_button.clicked.connect(self.returnToMainMenu)
+        return_button.setFont(instr_font)
+
+        # adding widgets
+        menu1_layout.addWidget(self.main_frame)
+        self.main_frame.layout().addWidget(fecha_label)
+        self.main_frame.layout().addWidget(self.dateline)
+        self.main_frame.layout().addWidget(predict_label)
+        self.main_frame.layout().addWidget(return_button)
+
+    def predict(self):
+        
+        self.graf1 = cls.MyMplCanvas2(gastos_list,self.dateline.text(),self.user,width=5, height=4, dpi=100, )
+        fecha_label2 = QLabel(self.graf1.fecha_gasto_text)
+        fecha_label2.setStyleSheet('color: #191970;')
+        fecha_label2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        fecha_label2.setFont(instr2_font)
+
+        # Recomendaciones y alertas
+        total_ingresos = self.user.dinero_actual  # SE TIENE QUE CAMBIAR
+        mensaje = ""
+        if self.graf1.precio_predicho > total_ingresos:
+            mensaje = ("¡Alerta! Estás gastando más de lo que ingresas mensualmente.")
+        elif self.graf1.precio_predicho > 0.5 * total_ingresos:
+            mensaje = ("Cuidado, has rebasado más del 50% de tus ingresos mensuales.")
+        else:
+            mensaje = ("Vas bien, tu gasto predicho está dentro de un rango manejable.")
+        mensaje_label = QLabel(mensaje)
+        mensaje_label.setStyleSheet('color: #191970;')
+        mensaje_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        mensaje_label.setFont(instr2_font)
+
+
+        frame_graficas = QFrame()
+        frame_graficas.setFrameShape(QFrame.Shape.Box) 
+        frame_graficas.setLineWidth(4)
+        frame_graficas.setLayout(QVBoxLayout())
+        frame_graficas.setStyleSheet('color: #2F2F2F;')
+        frame_graficas.setMinimumHeight(800)
+        self.main_frame.layout().addWidget(frame_graficas)
+        frame_graficas.layout().addWidget(self.graf1)
+        frame_graficas.layout().addWidget(fecha_label2)
+        frame_graficas.layout().addWidget(mensaje_label)
+
 
     def returnToMainMenu(self):
         self.main_menu_window.show()
@@ -677,7 +858,29 @@ QPushButton:pressed {
     border: 2px solid #191970; /* Cambiar borde al color #191970 */
 }
 """
-    
+
+back_button_style = """
+QPushButton {
+    background-color: #191970; /* Color de fondo */
+    color: white;              /* Color del texto */
+    border: 2px solid #4B4B4B; /* Borde del botón */
+    border-radius: 10px;       /* Bordes redondeados */
+    padding: 10px;             /* Espacio interno */
+    font-size: 16px;           /* Tamaño de la fuente */
+    font-weight: bold;         /* Negrita */
+    text-align: center;        /* Alinear el texto al centro */
+    text-decoration: none;     /* Sin subrayado */
+}
+QPushButton:hover {
+    background-color: #1E90FF; /* Color de fondo al pasar el ratón por encima */
+    border: 2px solid #8B0000; /* Cambiar borde al color #8B0000 */
+    color: #FFD700;            /* Cambiar el color del texto al color dorado */
+}
+QPushButton:pressed {
+    background-color: #000080; /* Color de fondo al presionar */
+    border: 2px solid #8B0000; /* Cambiar borde al color #8B0000 */
+}
+"""
 
 date_edit_style = """
     QDateEdit {
@@ -759,8 +962,22 @@ title_style = """
     }
 """
 
+progressBar_style = """
+QProgressBar {
+    border: 2px solid #4B4B4B;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 16px;
+    color: #8B0000;
+}
+QProgressBar::chunk {
+    background-color: #8B0000;
+    width: 20px;
+}
+"""
+
 ################ MAIN ####################
 
 main_menu_window = startWindow()
 main_menu_window.show()
-deskTopApp.exec()
+deskTopApp.exec()       
